@@ -113,60 +113,71 @@ export function TopNav() {
   };
 
   return (
-    <motion.nav
-      // Fade in after the intro completes. INTRO_REVEAL in Hero is 2.7s;
-      // matching cadence here so the nav doesn't pre-empt the hero entrance.
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, delay: 3.1, ease: [0.16, 1, 0.3, 1] }}
-      aria-label="primary navigation"
-      className="pointer-events-auto fixed left-1/2 top-9 z-40 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1.5 font-mono text-[13px] uppercase tracking-[0.2em] backdrop-blur-md md:flex"
+    <div
+      className="pointer-events-none fixed left-1/2 top-9 z-40 hidden -translate-x-1/2 flex-col items-center md:flex"
     >
-      {ITEMS.map((item) => {
-        const active = isActive(item);
-        const labelEl = (
-          <span
-            className={`relative z-10 px-5 py-2.5 transition-colors duration-200 ${
-              active ? "text-bg" : "text-fg-soft group-hover:text-fg"
-            }`}
-          >
-            {item.label}
-          </span>
-        );
-        const activePill = active && (
-          <motion.span
-            layoutId="topnav-active-pill"
-            aria-hidden
-            className="absolute inset-0 rounded-full bg-accent"
-            transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          />
-        );
-        const commonProps = {
-          "data-cursor": "hover" as const,
-          className: "group relative inline-flex items-center rounded-full",
-          "aria-current": active ? ("page" as const) : undefined,
-        };
+      <motion.nav
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 3.1, ease: [0.16, 1, 0.3, 1] }}
+        aria-label="primary navigation"
+        className="pointer-events-auto flex items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1.5 font-mono text-[13px] uppercase tracking-[0.2em] backdrop-blur-md"
+      >
+        {ITEMS.map((item) => {
+          const active = isActive(item);
+          const labelEl = (
+            <span
+              className={`relative z-10 px-5 py-2.5 transition-colors duration-200 ${
+                active ? "text-bg" : "text-fg-soft group-hover:text-fg"
+              }`}
+            >
+              {item.label}
+            </span>
+          );
+          const activePill = active && (
+            <motion.span
+              layoutId="topnav-active-pill"
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-accent"
+              transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            />
+          );
+          const commonProps = {
+            "data-cursor": "hover" as const,
+            className: "group relative inline-flex items-center rounded-full",
+            "aria-current": active ? ("page" as const) : undefined,
+          };
 
-        if (item.kind === "route") {
+          if (item.kind === "route") {
+            return (
+              <Link key={item.label} href={item.href} {...commonProps}>
+                {activePill}
+                {labelEl}
+              </Link>
+            );
+          }
           return (
-            <Link key={item.label} href={item.href} {...commonProps}>
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => goToSection(item.id)}
+              {...commonProps}
+            >
               {activePill}
               {labelEl}
-            </Link>
+            </button>
           );
-        }
-        return (
-          <button
-            key={item.label}
-            type="button"
-            onClick={() => goToSection(item.id)}
-            {...commonProps}
-          >
-            {activePill}
-            {labelEl}
-          </button>
-        );
-      })}
-    </motion.nav>
+        })}
+      </motion.nav>
+
+      <motion.p
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
+        className="mt-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-fg-soft"
+      >
+        open to roles. picky about them.
+      </motion.p>
+    </div>
   );
 }
