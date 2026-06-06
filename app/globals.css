@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0a;
+  --color-bg-soft: #111111;
+  --color-fg: #f5f5f5;
+  --color-fg-soft: #a3a3a3;
+  --color-muted: #5a5a5a;
+  --color-line: #1f1f1f;
+  --color-accent: #c5ff3d;
+  --color-accent-dim: #8fb52b;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  /* Prevent iOS rubber-band on the doc; the inner container handles scrolling. */
+  overscroll-behavior: none;
+}
+
+/*
+ * The persistent app frame.
+ * Locked to the viewport, draws the border, and clips overflow.
+ * The intro animation's final squircle hands off seamlessly into this frame
+ * (same inset, same border, same radius).
+ */
+.frame {
+  position: fixed;
+  inset: 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-bg);
+  z-index: 0;
+  transition: border-color 0.3s ease;
+}
+
+.intro-done .frame {
+  border-color: var(--color-fg);
+}
+
+@media (min-width: 768px) {
+  .frame {
+    inset: 16px;
+  }
+}
+
+/*
+ * The internal scroll viewport — this is where Lenis attaches and where all
+ * page content actually scrolls. The outer .frame stays put.
+ */
+.scroll-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+}
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Lenis (non-root) applies these classes to the wrapper div. Disable native
+ * smooth-scroll so Lenis's lerp owns the motion. */
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html,
+  body,
+  a,
+  button {
+    cursor: none;
+  }
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  will-change: transform;
+}
+
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 1px solid var(--color-fg-soft);
+  pointer-events: none;
+  z-index: 9998;
+  mix-blend-mode: difference;
+  will-change: transform;
+  opacity: 0.6;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.8s var(--ease-out-expo),
+    transform 0.8s var(--ease-out-expo);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
