@@ -19,8 +19,7 @@ const marqueeItems = [
 ];
 
 const thesisLines = [
-  { text: "Products over ideas.", accent: false },
-  { text: "Execution over theory.", accent: false },
+  { text: "Products over ideas. Execution over theory.", accent: false },
   { text: "Shipping over plans.", accent: true },
 ];
 
@@ -126,7 +125,7 @@ export function Work() {
 
           <div className="col-span-12 md:col-span-8">
             {/* Three stacked manifesto lines */}
-            <div className="space-y-1 md:space-y-2 text-[clamp(2.25rem,8vw,6rem)] font-medium leading-none tracking-[-0.035em]">
+            <div className="space-y-1 md:space-y-2 text-[clamp(1.75rem,5vw,5rem)] font-medium leading-[1.05] tracking-[-0.035em] text-balance">
               {thesisLines.map((line, i) => (
                 <motion.div
                   key={line.text}

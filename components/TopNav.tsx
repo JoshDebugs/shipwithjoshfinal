@@ -48,6 +48,15 @@ export function TopNav() {
   const lenis = useLenis();
   const [activeSection, setActiveSection] = useState<string>("top");
 
+  // For the tagline entrance animation delay
+  const [hasEntered, setHasEntered] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setHasEntered(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showTagline = pathname !== "/" || activeSection === "top";
+
   // Track which section is in the middle of the scroll viewport. Only
   // wires up when the home page is the current route — on other routes
   // there are no section elements to observe, so the effect bails.
@@ -172,8 +181,15 @@ export function TopNav() {
 
       <motion.p
         initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
+        animate={{ 
+          opacity: showTagline ? 1 : 0, 
+          y: showTagline ? 0 : -4 
+        }}
+        transition={{ 
+          duration: 0.5, 
+          delay: (showTagline && !hasEntered) ? 3.4 : 0, 
+          ease: [0.16, 1, 0.3, 1] 
+        }}
         className="mt-2.5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-fg-soft"
       >
         <span className="relative flex h-2 w-2">
