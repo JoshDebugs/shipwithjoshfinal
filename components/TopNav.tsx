@@ -174,8 +174,12 @@ export function TopNav() {
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 3.4, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-2.5 font-mono text-[11px] uppercase tracking-[0.22em] text-fg-soft"
+        className="mt-2.5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-fg-soft"
       >
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 animate-ping" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+        </span>
         open to roles. picky about them.
       </motion.p>
     </div>

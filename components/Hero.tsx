@@ -32,19 +32,7 @@ export function Hero() {
         >
           shipwithjosh<span className="text-accent">.</span>com
         </motion.div>
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          custom={INTRO_REVEAL + 0.8}
-          className="hidden md:flex items-center gap-2"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-          </span>
-          <span>open to roles. picky about them.</span>
-        </motion.div>
+
         <motion.div
           variants={fadeUp}
           initial="hidden"
