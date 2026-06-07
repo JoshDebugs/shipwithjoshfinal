@@ -53,7 +53,7 @@ export function Hero() {
           delay: INTRO_REVEAL,
           ease: EASE_OUT_EXPO,
         }}
-        className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 z-[2] h-[55%] w-[140%] lg:right-[-15vw] lg:left-auto lg:translate-x-0 lg:top-0 lg:bottom-auto lg:h-[101%] lg:w-[clamp(560px,64vw,1120px)] block"
+        className="pointer-events-none absolute right-0 bottom-0 z-[2] h-[55%] w-full lg:right-[-15vw] lg:top-0 lg:bottom-auto lg:h-[101%] lg:w-[clamp(560px,64vw,1120px)] block"
         aria-hidden
       >
         <Image
@@ -62,7 +62,7 @@ export function Hero() {
           fill
           priority
           sizes="(min-width: 1024px) 64vw, 100vw"
-          className="object-contain object-bottom lg:object-top-right"
+          className="object-contain object-right-bottom lg:object-top-right"
           style={{ filter: "grayscale(0.08) contrast(1.04)" }}
         />
       </motion.div>
