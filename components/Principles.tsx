@@ -14,7 +14,7 @@ const principles: Principle[] = [
   {
     n: "01",
     title: "Bias toward systems.",
-    body: "Code, AI, automation, distribution. I build things that compound — so the work keeps paying off long after I'm done with it.",
+    body: "Code, AI, automation, distribution. I build things that compound. so the work keeps paying off long after I'm done with it.",
     tags: ["systems", "automation", "ai", "compounding"],
   },
   {
@@ -32,7 +32,7 @@ const principles: Principle[] = [
   {
     n: "04",
     title: "Pick asymmetric bets.",
-    body: "Downside is one weekend. Upside is uncapped. Most of life is shaped like this — pick more of them.",
+    body: "Downside is one weekend. Upside is uncapped. Most of life is shaped like this. pick more of them.",
     tags: ["asymmetric", "leverage", "ev"],
   },
 ];
@@ -194,7 +194,7 @@ export function Principles() {
                 next decade.
               </p>
               <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
-                ps — none of this is original. all of it was earned the hard
+                ps. none of this is original. all of it was earned the hard
                 way.
               </p>
             </motion.div>

@@ -172,7 +172,7 @@ export function ProjectRow({ project }: Props) {
             <span className="tabular text-fg-soft">{project.year}</span>
           </div>
 
-          {/* arrow — points up-right toward the modal that slides in. Was a
+          {/* arrow. points up-right toward the modal that slides in. Was a
            *  rotating "+" when the row was an accordion; now that click means
            *  "open as overlay" the arrow shape reads as "elsewhere." */}
           <div className="col-span-12 md:col-span-1 hidden md:flex md:justify-end">

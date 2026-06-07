@@ -74,18 +74,18 @@ export const projects: Project[] = [
     ],
     caseStudy: {
       problem:
-        "Retail traders drown in information. Charts are noise until someone interprets them. New traders learn by losing money — they don't know what they don't know, and existing tools assume the opposite. The gap between 'looking at a chart' and 'understanding what it's telling you' is where most retail capital quietly dies.",
+        "Retail traders drown in information. Charts are noise until someone interprets them. New traders learn by losing money. they don't know what they don't know, and existing tools assume the opposite. The gap between 'looking at a chart' and 'understanding what it's telling you' is where most retail capital quietly dies.",
       approach:
-        "Put AI literally on the chart. Not in a side panel, not as a chatbot — embedded as an overlay that watches the same thing the trader watches, and explains it in real-time. Confidence scores instead of certainty. Learning modules that surface contextually, not in a separate 'academy' tab. Quant models accessible on the same page, not behind a paywall and three menus.",
+        "Put AI literally on the chart. Not in a side panel, not as a chatbot. embedded as an overlay that watches the same thing the trader watches, and explains it in real-time. Confidence scores instead of certainty. Learning modules that surface contextually, not in a separate 'academy' tab. Quant models accessible on the same page, not behind a paywall and three menus.",
       whatIBuilt: [
         "AI overlay that interacts with chart elements (candles, indicators, drawn levels) in real time.",
-        "Confidence-scored bet generator — every suggestion ships with a 0–100 confidence number, no fake certainty.",
-        "Inline learning modules — short lessons that appear contextually, so users level up while trading instead of beforehand.",
-        "Live quant models embedded on the page — strategies you can watch run, not just read about.",
+        "Confidence-scored bet generator. every suggestion ships with a 0–100 confidence number, no fake certainty.",
+        "Inline learning modules. short lessons that appear contextually, so users level up while trading instead of beforehand.",
+        "Live quant models embedded on the page. strategies you can watch run, not just read about.",
         "End-to-end built in 2 days. Next.js + AI SDK + chart library. Shipped, not prototyped.",
       ],
       outcome:
-        "v1 shipped in 2 days. Currently for sale. The thesis — AI as the interpretation layer between traders and markets — survived contact with reality.",
+        "v1 shipped in 2 days. Currently for sale. The thesis. AI as the interpretation layer between traders and markets. survived contact with reality.",
       outcomeStat: { value: "for sale", label: "asset, not project" },
       cta: {
         label: "want to buy LazyBull?",
@@ -129,14 +129,14 @@ export const projects: Project[] = [
     ],
     caseStudy: {
       problem:
-        "Gifting in India is bimodal: either generic (Amazon vouchers, branded baskets you've seen a hundred times) or slow (custom artisan, 2-3 weeks of lead time). The middle — premium AND instant AND customizable — didn't exist. Corporates have the same problem at 10x scale: they need branded gift drops in days, not weeks.",
+        "Gifting in India is bimodal: either generic (Amazon vouchers, branded baskets you've seen a hundred times) or slow (custom artisan, 2-3 weeks of lead time). The middle. premium AND instant AND customizable. didn't exist. Corporates have the same problem at 10x scale: they need branded gift drops in days, not weeks.",
       approach:
-        "Pre-curated boxes with on-the-fly customization. Build the storefront for online demand, but don't wait for SEO to compound — put physical stalls in high-traffic locations (residential blocks + tech parks) for instant trust + cash. Ops, build, and design all on one operator.",
+        "Pre-curated boxes with on-the-fly customization. Build the storefront for online demand, but don't wait for SEO to compound. put physical stalls in high-traffic locations (residential blocks + tech parks) for instant trust + cash. Ops, build, and design all on one operator.",
       whatIBuilt: [
-        "Custom storefront with a box configurator — pick the box, pick the contents, see the price update live.",
+        "Custom storefront with a box configurator. pick the box, pick the contents, see the price update live.",
         "Checkout flow optimized for impulse (gifting is emotional, not analytical).",
-        "Two physical stalls — one residential, one corporate tower (Cyberscape, Gurgaon).",
-        "Ops: inventory, delivery, customer comms — all run solo for the first 6 weeks.",
+        "Two physical stalls. one residential, one corporate tower (Cyberscape, Gurgaon).",
+        "Ops: inventory, delivery, customer comms. all run solo for the first 6 weeks.",
         "Brand identity from scratch: name, logo, box design, voice.",
       ],
       outcome:
@@ -158,11 +158,11 @@ export const projects: Project[] = [
       { value: "100%", label: "animation-led" },
     ],
     description:
-      "Freelance gig building high-end animated websites. Three clients. Each wanted motion as the medium, not decoration — booking flows, gamified product reveals, live location tracking.",
+      "Freelance gig building high-end animated websites. Three clients. Each wanted motion as the medium, not decoration. booking flows, gamified product reveals, live location tracking.",
     bullets: [
-      "Hotel + rooftop restaurant — booking flow with live property preview animations.",
-      "Gamified gym — interactive product showcase for connected machines.",
-      "Roaming ice cream truck — live location tracking with a rotating flavor menu.",
+      "Hotel + rooftop restaurant. booking flow with live property preview animations.",
+      "Gamified gym. interactive product showcase for connected machines.",
+      "Roaming ice cream truck. live location tracking with a rotating flavor menu.",
     ],
     stack: ["Animation-first web", "GSAP", "WebGL where needed", "Booking + maps"],
     role: "Freelance dev · motion + interaction",
@@ -175,9 +175,9 @@ export const projects: Project[] = [
     gallery: [],
     caseStudy: {
       problem:
-        "Businesses with genuinely interesting products — boutique hotels, gamified fitness equipment, roaming food vendors — get stuck with generic web templates that flatten what makes them distinctive. The motion-first agencies that could do it justice cost too much for early-stage. The gap: high-craft animation work at solo-operator pricing.",
+        "Businesses with genuinely interesting products. boutique hotels, gamified fitness equipment, roaming food vendors. get stuck with generic web templates that flatten what makes them distinctive. The motion-first agencies that could do it justice cost too much for early-stage. The gap: high-craft animation work at solo-operator pricing.",
       approach:
-        "Treat motion as the medium, not the decoration. Each site is built around the client's single most distinctive feature — and that feature gets the animation budget. Everything else stays restrained so the signature moment lands.",
+        "Treat motion as the medium, not the decoration. Each site is built around the client's single most distinctive feature. and that feature gets the animation budget. Everything else stays restrained so the signature moment lands.",
       whatIBuilt: [
         "Three production sites shipped across three different verticals.",
         "Each built to highlight one signature interaction the client cared most about.",
@@ -191,13 +191,13 @@ export const projects: Project[] = [
           name: "Hotel + rooftop restaurant",
           tagline: "Booking with live property preview.",
           description:
-            "Boutique hotel with a rooftop restaurant. The owners wanted potential guests to feel the property before booking — so the site is built around a scroll-driven preview that walks you through the space as you read the rates. Booking flow integrated without breaking the cinematic feel.",
+            "Boutique hotel with a rooftop restaurant. The owners wanted potential guests to feel the property before booking. so the site is built around a scroll-driven preview that walks you through the space as you read the rates. Booking flow integrated without breaking the cinematic feel.",
         },
         {
           name: "Gamified gym",
           tagline: "Interactive showcase for connected machines.",
           description:
-            "Gym with smart, connected workout machines. The site shows the machines the way a video game shows weapons — each one has its own page with interactive previews, stats, and game-like feedback. Translates the in-person experience into a web vocabulary.",
+            "Gym with smart, connected workout machines. The site shows the machines the way a video game shows weapons. each one has its own page with interactive previews, stats, and game-like feedback. Translates the in-person experience into a web vocabulary.",
         },
         {
           name: "Roaming ice cream truck",

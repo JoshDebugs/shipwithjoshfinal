@@ -368,7 +368,7 @@ export function Stack() {
                 ))}
               </ul>
 
-              {/* corner status LED — slow pulse, staggered per card */}
+              {/* corner status LED. slow pulse, staggered per card */}
               <motion.span
                 animate={{ opacity: [0.35, 0.85, 0.35] }}
                 transition={{

@@ -38,13 +38,13 @@ export function Hero() {
           initial="hidden"
           animate="show"
           custom={INTRO_REVEAL + 0.9}
-          className="tabular"
+          className="tabular hidden md:block"
         >
           chandigarh / ist
         </motion.div>
       </header>
 
-      {/* portrait — slides in from the LEFT, quick (after intro) */}
+      {/* portrait. slides in from the LEFT, quick (after intro) */}
       <motion.div
         initial={{ opacity: 0, x: -320 }}
         animate={{ opacity: 1, x: 0 }}
@@ -53,7 +53,7 @@ export function Hero() {
           delay: INTRO_REVEAL,
           ease: EASE_OUT_EXPO,
         }}
-        className="pointer-events-none absolute right-[-15vw] top-0 z-[2] hidden h-[101%] w-[clamp(560px,64vw,1120px)] lg:block"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-0 z-[2] h-[55%] w-[140%] lg:right-[-15vw] lg:left-auto lg:translate-x-0 lg:top-0 lg:bottom-auto lg:h-[101%] lg:w-[clamp(560px,64vw,1120px)] block"
         aria-hidden
       >
         <Image
@@ -61,14 +61,14 @@ export function Hero() {
           alt="Joshmann Singh"
           fill
           priority
-          sizes="(min-width: 1024px) 64vw, 0px"
-          className="object-contain object-top-right"
+          sizes="(min-width: 1024px) 64vw, 100vw"
+          className="object-contain object-bottom lg:object-top-right"
           style={{ filter: "grayscale(0.08) contrast(1.04)" }}
         />
       </motion.div>
 
       {/* center stage */}
-      <div className="relative z-10 flex flex-col justify-center min-h-[calc(100svh-160px)] px-6 md:px-12">
+      <div className="relative z-10 flex flex-col justify-start pt-12 lg:justify-center lg:pt-0 min-h-[calc(100svh-160px)] px-6 md:px-12">
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -102,7 +102,7 @@ export function Hero() {
         >
           Builder out of Chandigarh. I ship fast and have taste.
           <br />
-          This site is the proof — keep scrolling for receipts.
+          This site is the proof. keep scrolling for receipts.
         </motion.p>
 
         <motion.div
@@ -110,18 +110,19 @@ export function Hero() {
           initial="hidden"
           animate="show"
           custom={INTRO_REVEAL + 0.75}
-          className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-xs uppercase tracking-[0.2em] text-fg-soft"
+          className="mt-10 flex flex-col gap-y-3 font-mono text-xs uppercase tracking-[0.2em] text-fg-soft"
         >
-          <span className="tabular">
-            <span className="text-muted">03</span>{" "}
-            <span>startups shipped</span>
-          </span>
-          <span className="text-line">/</span>
-          <span className="tabular">
-            <span className="text-muted">00</span>{" "}
-            <span>vc raised</span>
-          </span>
-          <span className="text-line">/</span>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <span className="tabular">
+              <span className="text-muted">03</span>{" "}
+              <span>startups shipped</span>
+            </span>
+            <span className="text-line">/</span>
+            <span className="tabular">
+              <span className="text-muted">00</span>{" "}
+              <span>vc raised</span>
+            </span>
+          </div>
           <span className="tabular">
             <span className="text-muted">18</span>{" "}
             <span>years old</span>
@@ -135,7 +136,7 @@ export function Hero() {
         initial="hidden"
         animate="show"
         custom={INTRO_REVEAL + 1.0}
-        className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3"
+        className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-10 hidden md:flex flex-col items-center gap-3"
       >
         <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
           scroll if you want receipts

@@ -100,7 +100,7 @@ export function IntroAnimation() {
 
   if (!mounted || vw === 0) return null;
 
-  const padding = vw < 768 ? 6 : 10;
+  const padding = vw < 768 ? 8 : 10;
   const currentRadius = vw < 768 ? 12 : 16;
 
   return (
@@ -120,7 +120,7 @@ export function IntroAnimation() {
           transition={{ duration: FADE_MS / 1000, ease: "easeOut" }}
           aria-hidden
         >
-          {/* THE CUTOUT — sized to FINAL state at mount.
+          {/* THE CUTOUT. sized to FINAL state at mount.
               Only `transform: scale` animates → compositor-only, no layout thrashing.
               At scale ~0 the element is a sub-pixel dot at viewport center.
               Box-shadow paints bg around it at all times = no flash possible. */}

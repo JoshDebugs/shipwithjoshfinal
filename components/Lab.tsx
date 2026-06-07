@@ -75,7 +75,7 @@ export function Lab() {
           custom={0.4}
           className="mt-6 max-w-2xl text-fg-soft text-base md:text-lg leading-relaxed"
         >
-          Ten AI builds. Not flagships —{" "}
+          Ten AI builds. Not flagships .{" "}
           <span className="text-fg">sharpening sessions</span>. Most shipped in
           a weekend.{" "}
           <span className="text-accent">The rest are still in flux.</span>
@@ -192,7 +192,7 @@ export function Lab() {
           className="mt-12 md:mt-16 max-w-xl text-sm md:text-base text-fg-soft leading-relaxed"
         >
           The flagships are above.{" "}
-          <span className="text-fg">These are the studio floor</span> — where
+          <span className="text-fg">These are the studio floor</span>. where
           the practice happens.
         </motion.p>
       </div>

@@ -32,16 +32,16 @@ export async function generateMetadata({
   const project = projects.find((p) => p.id === slug);
   if (!project) return { title: "case not found" };
   return {
-    title: `${project.name} — case study`,
+    title: `${project.name}. case study`,
     description: project.tagline + " " + project.description,
     openGraph: {
-      title: `${project.name} — case study · shipwithjosh.com`,
+      title: `${project.name}. case study · shipwithjosh.com`,
       description: project.tagline,
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${project.name} — case study`,
+      title: `${project.name}. case study`,
       description: project.tagline,
     },
   };

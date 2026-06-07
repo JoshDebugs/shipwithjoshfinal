@@ -113,7 +113,7 @@ export function CaseStudyBody({
             { label: "status", value: project.statusLabel },
             {
               label: "headline metric",
-              value: project.metrics[0]?.value ?? "—",
+              value: project.metrics[0]?.value ?? ".",
             },
           ].map((m) => (
             <div
@@ -334,7 +334,7 @@ export function CaseStudyBody({
         </div>
       </section>
 
-      {/* Next chapter — page-only by default. Modal usage suppresses this
+      {/* Next chapter. page-only by default. Modal usage suppresses this
        *  because chaining from inside an overlay is jarring (the modal would
        *  swap content under the user, and the URL would change without the
        *  user moving). */}

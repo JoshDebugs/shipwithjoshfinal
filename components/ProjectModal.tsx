@@ -102,14 +102,14 @@ export function ProjectModal({ project }: { project: Project }) {
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={`${project.name} — case study`}
+      aria-label={`${project.name}. case study`}
       onMouseDown={(e) => {
         // Click-outside close: only when the click starts and ends on the
         // backdrop itself, not on a child that bubbled up.
         if (e.target === e.currentTarget) close();
       }}
     >
-      {/* Subtle dim. The bg is already near-black, so this is light — just
+      {/* Subtle dim. The bg is already near-black, so this is light. just
        *  enough to signal "this is a layer". */}
       <div className="absolute inset-0 bg-bg/70 backdrop-blur-[2px]" />
 
@@ -134,7 +134,7 @@ export function ProjectModal({ project }: { project: Project }) {
         }}
         className="relative w-full overflow-hidden rounded-t-2xl border-t border-line bg-bg shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.6)]"
       >
-        {/* Top chrome — sticky inside the panel so it stays put while the
+        {/* Top chrome. sticky inside the panel so it stays put while the
          *  long case-study body scrolls underneath. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-4 p-4 md:p-6">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-line bg-bg-soft/80 backdrop-blur px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-fg-soft">
@@ -161,7 +161,7 @@ export function ProjectModal({ project }: { project: Project }) {
           </button>
         </div>
 
-        {/* Scrollable inner — the modal's own scroll surface. ScrollReveal
+        {/* Scrollable inner. the modal's own scroll surface. ScrollReveal
          *  observes intersections relative to this element instead of the
          *  document, so reveal animations fire as the user scrolls inside
          *  the modal (not when the modal opens en bloc). */}

@@ -31,7 +31,7 @@ export default function NotFound() {
 
         <p className="mt-8 max-w-xl text-base md:text-lg text-fg-soft leading-relaxed">
           Whatever you were looking for, it's not here. The homepage is, though
-          — and there's a lot more interesting stuff on it anyway.
+         . and there's a lot more interesting stuff on it anyway.
         </p>
 
         <Link

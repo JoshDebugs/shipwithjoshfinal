@@ -47,7 +47,7 @@ const building: NowItem[] = [
   },
   {
     headline: "An AI trading co-pilot prototype",
-    body: "Spike build — an overlay that watches charts and flags broken setups in real-time. Different angle from LazyBull.",
+    body: "Spike build. an overlay that watches charts and flags broken setups in real-time. Different angle from LazyBull.",
   },
 ];
 
@@ -97,14 +97,14 @@ const openTo: NowItem[] = [
   },
   {
     headline: "Coffee with operators",
-    body: "AI / quant / founder-tools space — especially if you've shipped something I'd recognize.",
+    body: "AI / quant / founder-tools space. especially if you've shipped something I'd recognize.",
   },
 ];
 
 const helpWith: NowItem[] = [
   {
     headline: "Selling a small AI product",
-    body: "If you've sold one — DM or email. I want unvarnished notes.",
+    body: "If you've sold one. DM or email. I want unvarnished notes.",
   },
   {
     headline: "Second-brain systems at scale",
@@ -175,7 +175,7 @@ export default function NowPage() {
 
           <p className="mt-6 max-w-2xl text-lg md:text-xl text-fg-soft leading-relaxed reveal">
             A snapshot of what&apos;s actually consuming my attention. Updated
-            monthly. If this page looks stale —{" "}
+            monthly. If this page looks stale .{" "}
             <span className="text-fg">ping me, I probably forgot</span>.
           </p>
         </section>

@@ -105,7 +105,7 @@ export function Contact() {
         </motion.p>
       </div>
 
-      {/* Email CTA — the big one */}
+      {/* Email CTA. the big one */}
       <div className="px-6 md:px-12 pb-4 md:pb-6">
         <Magnetic inline={false} strength={0.12} radius={260}>
         <motion.a

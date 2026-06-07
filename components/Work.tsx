@@ -101,7 +101,7 @@ export function Work() {
         ))}
       </motion.div>
 
-      {/* Thesis block — the closer */}
+      {/* Thesis block. the closer */}
       <div className="relative px-6 md:px-12 py-20 md:py-32 overflow-hidden">
         <div className="grid-bg absolute inset-0 opacity-30" aria-hidden />
 
@@ -119,7 +119,7 @@ export function Work() {
             </div>
             <div className="hidden md:block max-w-xs text-sm text-fg-soft leading-relaxed">
               No outside money. No advisors. No incubator. Just products that
-              earn — built out of Chandigarh, aimed at the internet.
+              earn. built out of Chandigarh, aimed at the internet.
             </div>
           </motion.div>
 
@@ -188,7 +188,7 @@ export function Work() {
               }}
               className="mt-8 font-mono text-[10px] uppercase tracking-[0.22em] text-muted"
             >
-              ps — all of this in under 12 months.
+              ps. all of this in under 12 months.
             </motion.p>
           </div>
         </div>
