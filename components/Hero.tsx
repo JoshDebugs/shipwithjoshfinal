@@ -18,7 +18,7 @@ export function Hero() {
       // Visible scroll area inside the frame = 100svh − frame inset (1.5rem mobile / 2rem desktop).
       // Subtract main's outer padding (another 1.5rem / 2rem total) so the hero
       // fills exactly the first "screen" before the next section starts.
-      className="relative min-h-[calc(100svh-3rem)] md:min-h-[calc(100svh-4rem)] w-full overflow-hidden"
+      className="relative min-h-[calc(100svh-2.25rem)] md:min-h-[calc(100svh-3.25rem)] w-full overflow-hidden"
     >
       <div className="grid-bg absolute inset-0 opacity-40" aria-hidden />
 
@@ -53,7 +53,7 @@ export function Hero() {
           delay: INTRO_REVEAL,
           ease: EASE_OUT_EXPO,
         }}
-        className="pointer-events-none absolute left-180 right-0 top-0 z-[2] hidden h-[101%] w-[clamp(560px,64vw,1120px)] translate-x-[2vw] lg:block"
+        className="pointer-events-none absolute right-[-15vw] top-0 z-[2] hidden h-[101%] w-[clamp(560px,64vw,1120px)] lg:block"
         aria-hidden
       >
         <Image

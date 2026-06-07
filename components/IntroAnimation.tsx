@@ -11,7 +11,7 @@ const BAR_EXIT_MS = 280;
 const EXPAND_MS = 1100; // longer for liquid feel
 const FADE_MS = 280;
 
-const FINAL_RADIUS = 16;
+// FINAL_RADIUS is now calculated dynamically based on viewport in the render method
 
 // Custom cubic — eased-out, no harsh acceleration, gentle settle.
 // Almost-linear middle, soft tail. Reads as "controlled" not "snappy".
@@ -100,7 +100,8 @@ export function IntroAnimation() {
 
   if (!mounted || vw === 0) return null;
 
-  const padding = vw < 768 ? 12 : 16;
+  const padding = vw < 768 ? 6 : 10;
+  const currentRadius = vw < 768 ? 12 : 16;
 
   return (
     <AnimatePresence>
@@ -136,8 +137,8 @@ export function IntroAnimation() {
               left: padding,
               width: `calc(100vw - ${padding * 2}px)`,
               height: `calc(100vh - ${padding * 2}px)`,
-              borderRadius: FINAL_RADIUS,
-              border: "1px solid var(--color-fg)",
+              borderRadius: currentRadius,
+              border: "0.5px solid var(--color-fg)",
               boxShadow: "0 0 0 100vmax var(--color-bg)",
               transformOrigin: "center",
               willChange: "transform",

@@ -43,9 +43,9 @@ body {
  */
 .frame {
   position: fixed;
-  inset: 12px;
-  border: 1px solid transparent;
-  border-radius: 16px;
+  inset: 6px;
+  border: 0.5px solid transparent;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--color-bg);
   z-index: 0;
@@ -58,7 +58,8 @@ body {
 
 @media (min-width: 768px) {
   .frame {
-    inset: 16px;
+    inset: 10px;
+    border-radius: 16px;
   }
 }
 
