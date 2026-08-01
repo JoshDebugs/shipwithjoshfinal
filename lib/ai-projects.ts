@@ -100,13 +100,50 @@ export const labProjects: LabProject[] = [
     stack: ["Next.js", "Postgres", "Vercel AI SDK"],
     status: "open-source",
   },
+];
+
+export type SmallLabProject = {
+  id: string;
+  name: string;
+  description: string;
+  status: LabStatus;
+};
+
+export const smallLabProjects: SmallLabProject[] = [
   {
-    id: "lab-10",
-    index: "10",
-    name: "Fact Checker",
-    description:
-      "Browser extension that fact-checks tweets via web search + LLM verdicts.",
-    stack: ["Chrome ext", "OpenAI", "Brave Search"],
+    id: "small-01",
+    name: "Terminal GPT",
+    description: "Tiny rust binary for ChatGPT in the CLI.",
+    status: "shipped",
+  },
+  {
+    id: "small-02",
+    name: "AI Commit hooks",
+    description: "Auto-lints and generates commit summaries.",
+    status: "open-source",
+  },
+  {
+    id: "small-03",
+    name: "JSON Parser",
+    description: "LLM-based unstructured text to JSON parser.",
+    status: "shipped",
+  },
+  {
+    id: "small-04",
+    name: "Image Tagger",
+    description: "Drop a folder of images, get semantic tags.",
+    status: "wip",
+  },
+  {
+    id: "small-05",
+    name: "Vector Search API",
+    description: "Microservice for quick embedding indexing.",
     status: "archived",
+  },
+  {
+    id: "small-06",
+    name: "DocuChat",
+    description: "Simple single-file PDF question answering.",
+    status: "shipped",
   },
 ];

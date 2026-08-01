@@ -56,10 +56,37 @@ export function CaseStudyBody({
           // the long version of case {project.index}
         </div>
 
-        <h1 className="mt-8 text-[clamp(2.75rem,11vw,9.5rem)] font-medium leading-[0.95] tracking-[-0.045em] reveal">
-          {project.name}
-          <span className="text-accent">.</span>
-        </h1>
+        <div className="mt-8 flex flex-wrap items-center gap-6 md:gap-10 reveal">
+          <h1 className="text-[clamp(2.75rem,11vw,9.5rem)] font-medium leading-[0.95] tracking-[-0.045em]">
+            {project.name}
+            <span className="text-accent">.</span>
+          </h1>
+          {project.websiteUrl && (
+            <a
+              href={project.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center justify-center gap-3 rounded-full bg-accent px-8 py-4 md:px-10 md:py-5 font-mono text-sm md:text-base font-bold uppercase tracking-[0.15em] text-bg transition-all duration-300 hover:scale-105 hover:bg-fg active:scale-95 active:bg-fg-soft"
+              data-cursor="hover"
+            >
+              <span>take a look</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+              >
+                <path
+                  d="M4 12L12 4M12 4H6M12 4V10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="square"
+                />
+              </svg>
+            </a>
+          )}
+        </div>
 
         <p className="mt-6 max-w-2xl text-lg md:text-2xl text-fg-soft leading-relaxed reveal">
           {project.tagline}
@@ -88,18 +115,20 @@ export function CaseStudyBody({
       {/* Hero image */}
       {project.hero.src && (
         <section className="px-6 md:px-12 pb-12 md:pb-20">
-          <div
-            className="relative w-full overflow-hidden rounded-lg border border-line bg-bg-soft reveal"
-            style={{ aspectRatio: project.hero.aspect }}
-          >
-            <Image
-              src={project.hero.src}
-              alt={project.hero.alt}
-              fill
-              priority
-              sizes="(min-width: 768px) 88vw, 100vw"
-              className="object-cover"
-            />
+          <div className="relative reveal">
+            <div
+              className="relative w-full overflow-hidden rounded-lg border border-line bg-bg-soft"
+              style={{ aspectRatio: project.hero.aspect }}
+            >
+              <Image
+                src={project.hero.src}
+                alt={project.hero.alt}
+                fill
+                priority
+                sizes="(min-width: 768px) 88vw, 100vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </section>
       )}

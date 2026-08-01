@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Cursor } from "@/components/Cursor";
 import { AppFrame } from "@/components/AppFrame";
 import { ConsoleSignature } from "@/components/ConsoleSignature";
+import { SwipeNavigation } from "@/components/SwipeNavigation";
 
 import { IntroAnimation } from "@/components/IntroAnimation";
 import "./globals.css";
@@ -98,6 +99,7 @@ export default function RootLayout({
         <Cursor />
 
         <ConsoleSignature />
+        <SwipeNavigation />
         <Analytics />
         <IntroAnimation />
       </body>

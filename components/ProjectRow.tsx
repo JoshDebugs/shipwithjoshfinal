@@ -42,7 +42,7 @@ export function ProjectRow({ project }: Props) {
 
   return (
     <div
-      className="relative border-b border-line"
+      className="relative border-b border-line group/row"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       data-cursor="hover"

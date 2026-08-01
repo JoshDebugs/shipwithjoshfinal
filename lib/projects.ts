@@ -34,6 +34,7 @@ export type Project = {
   hero: { src: string; alt: string; aspect: string };
   gallery: { src: string; alt: string }[];
   links?: { label: string; href: string }[];
+  websiteUrl?: string;
   caseStudy: CaseStudy;
 };
 
@@ -67,6 +68,7 @@ export const projects: Project[] = [
       alt: "LazyBull dashboard with AI overlay",
       aspect: "16 / 10",
     },
+    websiteUrl: "https://lazybull.us",
     gallery: [
       { src: "/assets/Lazybull2.png", alt: "LazyBull AI analysis panel" },
       { src: "/assets/LazyBull3.png", alt: "LazyBull learning module" },
@@ -123,6 +125,7 @@ export const projects: Project[] = [
       alt: "Frags n Flavs storefront",
       aspect: "16 / 10",
     },
+    websiteUrl: "https://fragsnflavs.com",
     gallery: [
       { src: "/assets/FRAGSNFLAVS.png", alt: "Frags n Flavs box" },
       { src: "/assets/fragsnflavs1.png", alt: "Frags n Flavs product" },

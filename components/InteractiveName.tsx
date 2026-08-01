@@ -51,7 +51,12 @@ function Letter({ char }: { char: string }) {
   }, [x, y]);
 
   if (char === " ") {
-    return <span className="inline-block w-[0.35em]" aria-hidden />;
+    return (
+      <>
+        <span className="inline-block w-[0.35em] max-[400px]:hidden" aria-hidden />
+        <br className="hidden max-[400px]:block" />
+      </>
+    );
   }
 
   return (

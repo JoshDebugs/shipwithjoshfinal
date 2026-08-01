@@ -40,10 +40,10 @@ const principles: Principle[] = [
 export function Principles() {
   return (
     <section id="principles" className="relative bg-bg">
-      <div className="relative px-6 md:px-12 pt-20 md:pt-32 pb-20 md:pb-32">
+      <div className="relative px-6 md:px-12 pt-20 md:pt-32 pb-20 md:pb-32 max-[400px]:px-0 max-[400px]:pt-4 max-[400px]:pb-0">
         <div className="grid grid-cols-12 gap-x-6 md:gap-x-12">
           {/* Sticky thesis (left) */}
-          <div className="col-span-12 md:col-span-5 md:sticky md:top-24 md:self-start">
+          <div className="col-span-12 md:col-span-5 md:sticky md:top-24 md:self-start max-[400px]:px-6">
             <motion.div
               variants={fadeUp}
               initial="hidden"
@@ -95,8 +95,8 @@ export function Principles() {
           </div>
 
           {/* Principles (scrolling right) */}
-          <div className="col-span-12 md:col-span-7 mt-16 md:mt-0">
-            <div className="space-y-20 md:space-y-32">
+          <div className="col-span-12 md:col-span-7 mt-16 md:mt-0 max-[400px]:mt-10">
+            <div className="space-y-20 md:space-y-32 max-[400px]:space-y-0">
               {principles.map((p) => (
                 <motion.article
                   key={p.n}
@@ -108,7 +108,7 @@ export function Principles() {
                     delay: 0.05,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="relative"
+                  className="relative max-[400px]:px-6 max-[400px]:py-10 max-[400px]:border-b max-[400px]:border-line"
                 >
                   {/* number + animated rule */}
                   <div className="flex items-center gap-4">
@@ -175,7 +175,7 @@ export function Principles() {
                 delay: 0.15,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="mt-24 md:mt-40 border-t border-line pt-10"
+              className="mt-24 md:mt-40 border-t border-line pt-10 max-[400px]:mt-0 max-[400px]:border-t-0 max-[400px]:px-6 max-[400px]:py-10"
             >
               <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
                 currently orbiting

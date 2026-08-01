@@ -134,7 +134,7 @@ export function Lab() {
       <div className="px-6 md:px-12 pb-20 md:pb-32">
         <motion.div
           layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 max-[550px]:flex max-[550px]:flex-nowrap max-[550px]:overflow-x-auto max-[550px]:snap-x max-[550px]:snap-mandatory max-[550px]:-mx-6 max-[550px]:px-[7.5vw] max-[550px]:pb-6 max-[550px]:gap-4 max-[550px]:[scrollbar-width:none] max-[550px]:[&::-webkit-scrollbar]:hidden"
         >
           <AnimatePresence mode="popLayout" initial={false}>
             {visible.map((p) => (
@@ -159,7 +159,7 @@ export function Lab() {
                 transition={{
                   layout: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
                 }}
-                className="h-full"
+                className="h-full max-[550px]:w-[85vw] max-[350px]:w-[92vw] max-[550px]:flex-none max-[550px]:snap-center max-[550px]:shrink-0"
               >
                 <LabCard project={p} />
               </motion.div>

@@ -165,12 +165,12 @@ export function Work() {
                     delay: 0.6 + i * 0.08,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="flex items-baseline justify-between rounded-md border border-line bg-bg-soft/60 px-4 py-3"
+                  className="flex flex-col items-center justify-center gap-1 md:gap-1.5 rounded-md border border-line bg-bg-soft/60 px-2 py-3 md:px-5 md:py-4"
                 >
-                  <span className="font-sans text-2xl md:text-3xl font-medium tabular leading-none">
+                  <span className="font-sans text-2xl md:text-3xl font-medium tabular leading-none text-center">
                     {s.value}
                   </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+                  <span className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-muted text-center whitespace-nowrap">
                     {s.label}
                   </span>
                 </motion.div>

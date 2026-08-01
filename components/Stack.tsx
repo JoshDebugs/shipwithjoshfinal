@@ -2,6 +2,39 @@
 
 import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/motion";
+import { IconType } from "react-icons";
+import {
+  SiNextdotjs,
+  SiTypescript,
+  SiTrpc,
+  SiTailwindcss,
+  SiReact,
+  SiPostgresql,
+  SiPrisma,
+  SiRedis,
+  SiSupabase,
+  SiVercel,
+  SiOpenai,
+  SiAnthropic,
+  SiFramer,
+  SiGreensock,
+  SiThreedotjs,
+  SiClerk,
+  SiResend,
+  SiStripe,
+  SiRailway,
+  SiDocker,
+  SiSentry,
+} from "react-icons/si";
+import {
+  FiDatabase,
+  FiCpu,
+  FiLayers,
+  FiTerminal,
+  FiMove,
+  FiShield,
+  FiZap,
+} from "react-icons/fi";
 
 type Freq = "daily" | "often" | "exploring";
 
@@ -9,6 +42,8 @@ type Tool = {
   name: string;
   freq: Freq;
   reason: string;
+  Icon: IconType;
+  color?: string;
 };
 
 type Category = {
@@ -26,26 +61,36 @@ const stack: Category[] = [
         name: "Next.js",
         freq: "daily",
         reason: "default for any product i ship.",
+        Icon: SiNextdotjs,
+        color: "#ffffff",
       },
       {
         name: "TypeScript",
         freq: "daily",
         reason: "non-negotiable past v1.",
+        Icon: SiTypescript,
+        color: "#3178C6",
       },
       {
         name: "tRPC",
         freq: "often",
         reason: "type-safe contracts, zero glue code.",
+        Icon: SiTrpc,
+        color: "#2596B6",
       },
       {
         name: "Tailwind",
         freq: "daily",
         reason: "design system in a single file.",
+        Icon: SiTailwindcss,
+        color: "#06B6D4",
       },
       {
         name: "React",
         freq: "daily",
         reason: "still the right primitive.",
+        Icon: SiReact,
+        color: "#61DAFB",
       },
     ],
   },
@@ -57,26 +102,36 @@ const stack: Category[] = [
         name: "PostgreSQL",
         freq: "daily",
         reason: "primary store. always.",
+        Icon: SiPostgresql,
+        color: "#4169E1",
       },
       {
         name: "Prisma",
         freq: "daily",
         reason: "schemas as code, migrations as commits.",
+        Icon: SiPrisma,
+        color: "#ffffff",
       },
       {
         name: "Redis · Upstash",
         freq: "often",
         reason: "edge-native caching + rate limits.",
+        Icon: SiRedis,
+        color: "#DC382D",
       },
       {
         name: "Supabase",
         freq: "often",
         reason: "fast scaffolding for MVPs.",
+        Icon: SiSupabase,
+        color: "#3ECF8E",
       },
       {
         name: "Pinecone",
         freq: "often",
         reason: "vector store for retrieval.",
+        Icon: FiDatabase,
+        color: "#ffffff",
       },
     ],
   },
@@ -88,26 +143,36 @@ const stack: Category[] = [
         name: "Agent workflows",
         freq: "daily",
         reason: "multi-step tool use, claude-driven.",
+        Icon: FiCpu,
+        color: "#ffffff",
       },
       {
         name: "RAG + embeddings",
         freq: "often",
         reason: "pinecone retrieval, openai embeddings.",
+        Icon: FiLayers,
+        color: "#ffffff",
       },
       {
         name: "Vercel AI SDK",
         freq: "daily",
         reason: "streaming + tool calls, type-safe.",
+        Icon: SiVercel,
+        color: "#ffffff",
       },
       {
         name: "Anthropic + OpenAI",
         freq: "daily",
         reason: "inference layer. claude-first.",
+        Icon: SiAnthropic,
+        color: "#D97757",
       },
       {
         name: "Cursor · Claude Code",
         freq: "daily",
         reason: "shipping 5x faster with agents.",
+        Icon: FiTerminal,
+        color: "#ffffff",
       },
     ],
   },
@@ -119,21 +184,29 @@ const stack: Category[] = [
         name: "Framer Motion",
         freq: "daily",
         reason: "default for UI motion + gestures.",
+        Icon: SiFramer,
+        color: "#0055FF",
       },
       {
         name: "GSAP",
         freq: "often",
         reason: "complex scroll choreography.",
+        Icon: SiGreensock,
+        color: "#88CE02",
       },
       {
         name: "Lenis",
         freq: "often",
         reason: "smooth scroll without the jank.",
+        Icon: FiMove,
+        color: "#ffffff",
       },
       {
         name: "Three.js · R3F",
         freq: "exploring",
         reason: "3D only where it adds signal.",
+        Icon: SiThreedotjs,
+        color: "#ffffff",
       },
     ],
   },
@@ -145,21 +218,29 @@ const stack: Category[] = [
         name: "Clerk",
         freq: "often",
         reason: "fastest auth to production.",
+        Icon: SiClerk,
+        color: "#6C47FF",
       },
       {
         name: "Better Auth",
         freq: "exploring",
         reason: "for self-hosted depth.",
+        Icon: FiShield,
+        color: "#ffffff",
       },
       {
         name: "Resend",
         freq: "often",
         reason: "transactional email that ships.",
+        Icon: SiResend,
+        color: "#ffffff",
       },
       {
         name: "Stripe",
         freq: "often",
         reason: "payments. obviously.",
+        Icon: SiStripe,
+        color: "#635BFF",
       },
     ],
   },
@@ -171,26 +252,36 @@ const stack: Category[] = [
         name: "Vercel",
         freq: "daily",
         reason: "default deploy. zero-config edge.",
+        Icon: SiVercel,
+        color: "#ffffff",
       },
       {
         name: "Railway",
         freq: "often",
         reason: "when it needs a real server.",
+        Icon: SiRailway,
+        color: "#ffffff",
       },
       {
         name: "Docker",
         freq: "often",
         reason: "containers where it earns its weight.",
+        Icon: SiDocker,
+        color: "#2496ED",
       },
       {
         name: "Trigger.dev",
         freq: "exploring",
         reason: "background jobs + AI workflows.",
+        Icon: FiZap,
+        color: "#ffffff",
       },
       {
         name: "Sentry",
         freq: "often",
         reason: "errors before users find them.",
+        Icon: SiSentry,
+        color: "#E03E2F",
       },
     ],
   },
@@ -198,10 +289,10 @@ const stack: Category[] = [
 
 const totalTools = stack.reduce((acc, c) => acc + c.tools.length, 0);
 
-const freqDot: Record<Freq, string> = {
-  daily: "bg-accent",
-  often: "bg-fg-soft",
-  exploring: "bg-transparent border border-accent",
+const freqIconColor: Record<Freq, string> = {
+  daily: "text-accent opacity-100",
+  often: "text-fg-soft opacity-100",
+  exploring: "text-accent/50 opacity-100",
 };
 
 const freqLabel: Record<Freq, string> = {
@@ -267,15 +358,15 @@ export function Stack() {
       >
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 font-mono text-[10px] uppercase tracking-[0.22em] text-fg-soft">
           <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            <FiCpu className="h-3 w-3 text-accent" />
             daily driver
           </span>
           <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-fg-soft" />
+            <FiCpu className="h-3 w-3 text-fg-soft" />
             often
           </span>
           <span className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full border border-accent bg-transparent" />
+            <FiCpu className="h-3 w-3 text-accent/50" />
             exploring
           </span>
           <span className="ml-auto text-muted tabular">
@@ -297,7 +388,7 @@ export function Stack() {
               transition: { staggerChildren: 0.09, delayChildren: 0.1 },
             },
           }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 max-[550px]:flex max-[550px]:flex-nowrap max-[550px]:overflow-x-auto max-[550px]:snap-x max-[550px]:snap-mandatory max-[550px]:-mx-6 max-[550px]:px-[7.5vw] max-[550px]:pb-6 max-[550px]:gap-4 max-[550px]:[scrollbar-width:none] max-[550px]:[&::-webkit-scrollbar]:hidden"
         >
           {stack.map((cat, ci) => (
             <motion.div
@@ -312,7 +403,7 @@ export function Stack() {
               }}
               whileHover={{ y: -3 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="group relative rounded-lg border border-line bg-bg-soft/40 p-5 md:p-6 transition-colors duration-300 hover:border-accent/40 hover:bg-bg-soft/60"
+              className="group relative rounded-lg border border-line bg-bg-soft/40 p-5 md:p-6 transition-colors duration-300 hover:border-accent/40 hover:bg-bg-soft/60 max-[550px]:w-[85vw] max-[350px]:w-[92vw] max-[550px]:flex-none max-[550px]:snap-center max-[550px]:shrink-0"
               data-cursor="hover"
             >
               {/* Header */}
@@ -338,21 +429,22 @@ export function Stack() {
                     className="group/tool flex items-start justify-between gap-3 -mx-2 px-2 py-1 rounded-md transition-colors duration-200 hover:bg-bg-soft/60"
                   >
                     <div className="flex items-start gap-3 min-w-0">
-                      <span
-                        className={`mt-[7px] h-1.5 w-1.5 flex-none rounded-full ${
-                          freqDot[tool.freq]
-                        } ${
-                          tool.freq === "daily"
-                            ? "group-hover/tool:animate-pulse"
-                            : ""
-                        }`}
-                      />
+                      <div className="mt-[3px] flex-none">
+                        <tool.Icon
+                          className={`h-[15px] w-[15px] transition-colors duration-300 ${
+                            tool.freq === "daily"
+                              ? "group-hover/tool:animate-pulse"
+                              : ""
+                          }`}
+                          style={{ color: tool.color }}
+                        />
+                      </div>
                       <div className="min-w-0">
-                        <div className="text-[15px] font-medium text-fg leading-snug">
+                        <div className="text-[15px] font-medium text-fg leading-snug group-hover/tool:text-accent transition-colors duration-300">
                           {tool.name}
                         </div>
-                        <div className="mt-1 font-mono text-[10.5px] text-muted leading-snug">
-                          <span className="text-line">// </span>
+                        <div className="mt-1 font-mono text-[10.5px] text-muted leading-snug group-hover/tool:text-fg-soft transition-colors duration-300">
+                          <span className="text-line group-hover/tool:text-accent/50 transition-colors duration-300">// </span>
                           {tool.reason}
                         </div>
                       </div>
