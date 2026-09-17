@@ -180,6 +180,15 @@ export default function NowPage() {
           </p>
         </section>
 
+        <NowSectionRaw eyebrow="// the 2030 master plan">
+          <p className="text-lg md:text-xl text-fg leading-relaxed max-w-3xl">
+            I am building a comprehensive engineering stack across Math, CS, AI/ML, and Finance.{" "}
+            <Link href="/roadmap" className="text-accent underline decoration-accent/30 hover:decoration-accent transition-colors">
+              View the interactive curriculum mindmap →
+            </Link>
+          </p>
+        </NowSectionRaw>
+
         <NowSection eyebrow="// building" items={building} />
         <NowSection eyebrow="// learning" items={learning} />
         <NowSection eyebrow="// reading" items={reading} />

@@ -35,7 +35,7 @@ export function Hero() {
       <header className="relative z-10 flex md:hidden xl:flex items-center justify-between px-6 md:px-12 pt-6 md:pt-8 font-mono text-[11px] uppercase tracking-[0.18em] text-fg-soft">
         <motion.div
           variants={fadeUp}
-          initial="hidden"
+          initial={baseDelay === 0 ? "show" : "hidden"}
           animate="show"
           custom={baseDelay + 0.7}
         >
@@ -44,7 +44,7 @@ export function Hero() {
 
         <motion.div
           variants={fadeUp}
-          initial="hidden"
+          initial={baseDelay === 0 ? "show" : "hidden"}
           animate="show"
           custom={baseDelay + 0.9}
           className="tabular hidden md:block"
@@ -55,7 +55,7 @@ export function Hero() {
 
       {/* portrait. slides in from the LEFT, quick (after intro) */}
       <motion.div
-        initial={{ opacity: 0, x: -320 }}
+        initial={baseDelay === 0 ? { opacity: 1, x: 0 } : { opacity: 0, x: -320 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{
           duration: 0.55,
@@ -80,7 +80,7 @@ export function Hero() {
       <div className="relative z-10 flex flex-col justify-start pt-16 md:pt-56 xl:justify-center xl:pt-0 min-h-[calc(100svh-160px)] px-6 md:px-12">
         <motion.div
           variants={fadeUp}
-          initial="hidden"
+          initial={baseDelay === 0 ? "show" : "hidden"}
           animate="show"
           custom={baseDelay + 0.4}
           className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-6"
@@ -91,7 +91,7 @@ export function Hero() {
 
         {/* Name slides in from the RIGHT, slow */}
         <motion.div
-          initial={{ opacity: 0, x: 320 }}
+          initial={baseDelay === 0 ? { opacity: 1, x: 0 } : { opacity: 0, x: 320 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{
             duration: 1.0,
@@ -104,7 +104,7 @@ export function Hero() {
 
         <motion.p
           variants={fadeUp}
-          initial="hidden"
+          initial={baseDelay === 0 ? "show" : "hidden"}
           animate="show"
           custom={baseDelay + 0.6}
           className="mt-8 md:mt-10 max-w-2xl text-fg-soft text-lg md:text-xl leading-relaxed"
@@ -116,7 +116,7 @@ export function Hero() {
 
         <motion.div
           variants={fadeUp}
-          initial="hidden"
+          initial={baseDelay === 0 ? "show" : "hidden"}
           animate="show"
           custom={baseDelay + 0.75}
           className="mt-10 flex flex-col gap-y-3 font-mono text-xs uppercase tracking-[0.2em] text-fg-soft"
@@ -142,7 +142,7 @@ export function Hero() {
       {/* scroll hint */}
       <motion.div
         variants={fadeUp}
-        initial="hidden"
+        initial={baseDelay === 0 ? "show" : "hidden"}
         animate="show"
         custom={baseDelay + 1.0}
         className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-10 hidden md:flex flex-col items-center gap-3"
