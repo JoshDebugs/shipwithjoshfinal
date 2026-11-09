@@ -78,16 +78,7 @@ export function Hero() {
 
       {/* center stage */}
       <div className="relative z-10 flex flex-col justify-start pt-16 md:pt-56 xl:justify-center xl:pt-0 min-h-[calc(100svh-160px)] px-6 md:px-12">
-        <motion.div
-          variants={fadeUp}
-          initial={baseDelay === 0 ? "show" : "hidden"}
-          animate="show"
-          custom={baseDelay + 0.4}
-          className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted mb-6"
-        >
-          <span className="text-accent">●</span> currently
-          shipping LazyBull
-        </motion.div>
+
 
         {/* Name slides in from the RIGHT, slow */}
         <motion.div
@@ -128,14 +119,10 @@ export function Hero() {
             </span>
             <span className="text-line">/</span>
             <span className="tabular">
-              <span className="text-muted">00</span>{" "}
-              <span>vc raised</span>
+              <span className="text-muted">19</span>{" "}
+              <span>years old</span>
             </span>
           </div>
-          <span className="tabular">
-            <span className="text-muted">18</span>{" "}
-            <span>years old</span>
-          </span>
         </motion.div>
       </div>
 

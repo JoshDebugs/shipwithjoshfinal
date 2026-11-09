@@ -32,10 +32,8 @@ type NavItem =
 
 const ITEMS: NavItem[] = [
   { kind: "section", id: "top", label: "home" },
-  { kind: "section", id: "work", label: "work" },
-  { kind: "section", id: "lab", label: "lab" },
-  { kind: "section", id: "contact", label: "contact" },
   { kind: "route", href: "/now", label: "/now" },
+  { kind: "route", href: "/life", label: "/life" },
 ];
 
 const SECTION_IDS = ITEMS.filter((i) => i.kind === "section").map(
@@ -55,7 +53,7 @@ export function TopNav() {
     return () => clearTimeout(t);
   }, []);
 
-  const showTagline = pathname !== "/" || activeSection === "top";
+  const showTagline = pathname === "/life" ? false : (pathname !== "/" || activeSection === "top");
 
   // Track which section is in the middle of the scroll viewport. Only
   // wires up when the home page is the current route — on other routes
@@ -134,26 +132,66 @@ export function TopNav() {
       >
         {ITEMS.map((item) => {
           const active = isActive(item);
+          const isLife = item.label === "/life";
+          
+          if (isLife) {
+            return (
+              <Link key={item.label} href="/life" data-cursor="hover" className="-my-[6px] -mr-[6px]">
+                <div className={`
+                  relative group flex items-center justify-center py-[16px] w-[114px] rounded-full
+                  bg-white/[0.03]
+                  backdrop-blur-2xl backdrop-saturate-150
+                  border border-white/[0.12] border-t-white/[0.22]
+                  shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]
+                  overflow-hidden transition-all duration-500
+                `}>
+                  {/* 4-Color Vertical Grid with sequential entrance and reverse sequential exit */}
+                  <div className="absolute inset-0 flex overflow-hidden rounded-full">
+                    <div className={`flex-1 h-full bg-[#EAF64B] origin-left transition-transform duration-[75ms] ease-linear ${active ? 'scale-x-[1.03]' : 'scale-x-0 group-hover:scale-x-[1.03] delay-[225ms] group-hover:delay-[0ms]'}`} />
+                    <div className={`flex-1 h-full bg-[#87C34B] origin-left transition-transform duration-[75ms] ease-linear ${active ? 'scale-x-[1.03]' : 'scale-x-0 group-hover:scale-x-[1.03] delay-[150ms] group-hover:delay-[75ms]'}`} />
+                    <div className={`flex-1 h-full bg-[#62A637] origin-left transition-transform duration-[75ms] ease-linear ${active ? 'scale-x-[1.03]' : 'scale-x-0 group-hover:scale-x-[1.03] delay-[75ms] group-hover:delay-[150ms]'}`} />
+                    <div className={`flex-1 h-full bg-[#42923C] origin-left transition-transform duration-[75ms] ease-linear ${active ? 'scale-x-[1.03]' : 'scale-x-0 group-hover:scale-x-[1.03] delay-[0ms] group-hover:delay-[225ms]'}`} />
+                  </div>
+                  
+                  {/* Subtle inner glass overlay to maintain premium feel */}
+                  <div className={`absolute inset-0 rounded-full transition-opacity duration-500 ring-1 ring-inset ring-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] pointer-events-none ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                  
+                  {/* Content */}
+                  <span className={`relative z-10 flex items-center text-[13px] font-bold tracking-[0.4em] transition-colors duration-300 ml-[0.2em] ${active ? 'text-black drop-shadow-none' : 'text-white group-hover:text-black drop-shadow-sm group-hover:drop-shadow-none'}`}>
+                    /life
+                  </span>
+                </div>
+              </Link>
+            );
+          }
+
+          const isHome = item.label === "home";
+          const isNow = item.label === "/now";
+          
           const labelEl = (
             <span
               className={`relative z-10 px-5 py-2.5 transition-colors duration-200 ${
-                active ? "text-bg" : "text-fg-soft group-hover:text-fg"
+                isHome 
+                  ? "text-bg" 
+                  : active 
+                    ? "text-accent" 
+                    : "text-fg-soft group-hover:text-fg"
               }`}
             >
               {item.label}
             </span>
           );
-          const activePill = active && (
-            <motion.span
-              layoutId="topnav-active-pill"
+          
+          const activePill = isHome && (
+            <span
               aria-hidden
               className="absolute inset-0 rounded-full bg-accent"
-              transition={{ type: "spring", stiffness: 380, damping: 32 }}
             />
           );
+          
           const commonProps = {
             "data-cursor": "hover" as const,
-            className: "group relative inline-flex items-center rounded-full",
+            className: `group relative inline-flex items-center justify-center rounded-full ${isHome ? "w-[108px]" : ""}`,
             "aria-current": active ? ("page" as const) : undefined,
           };
 
@@ -165,6 +203,7 @@ export function TopNav() {
               </Link>
             );
           }
+          
           return (
             <button
               key={item.label}

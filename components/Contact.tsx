@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useLenis } from "lenis/react";
 import { fadeUp } from "@/lib/motion";
 import { Magnetic } from "./Magnetic";
+import Image from "next/image";
 
 const EMAIL = "workaddressjosh@gmail.com";
 
@@ -14,18 +15,42 @@ const socials = [
     handle: "@JoshDebugs",
     label: "best for shorter loops.",
     href: "https://x.com/JoshDebugs",
+    logo: "/assets/x-logo.png",
+    bg: "bg-[#000000]",
+    border: "border-[#2f3336]",
+    hoverBorder: "hover:border-accent/60",
+    textClass: "text-fg",
+    labelClass: "text-fg-soft font-bold",
+    subClass: "text-muted",
+    arrowClass: "text-fg-soft group-hover:text-accent",
   },
   {
     platform: "github",
     handle: "JoshDebugs",
     label: "the work, raw.",
     href: "https://github.com/JoshDebugs",
+    logo: "/assets/github-logo.png",
+    bg: "bg-[#1b1f23]",
+    border: "border-[#30363d]",
+    hoverBorder: "hover:border-accent/60",
+    textClass: "text-fg",
+    labelClass: "text-fg-soft font-bold",
+    subClass: "text-muted",
+    arrowClass: "text-fg-soft group-hover:text-accent",
   },
   {
     platform: "linkedin",
     handle: "josh dhiman",
     label: "for the recruiter circuit.",
     href: "https://www.linkedin.com/in/josh-dhiman-32a183383/",
+    logo: "/assets/linkedin-logo.png",
+    bg: "bg-[#1065c6]",
+    border: "border-[#1065c6]",
+    hoverBorder: "hover:border-white/60",
+    textClass: "text-white",
+    labelClass: "text-white/80 font-bold",
+    subClass: "text-white/80",
+    arrowClass: "text-white/80 group-hover:text-white",
   },
 ];
 
@@ -130,12 +155,12 @@ export function Contact() {
             aria-hidden
           />
 
-          <div className="flex items-end justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="min-w-0 flex-1">
-              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3">
-                // primary channel
+              <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted mb-3 font-bold">
+                // primary channel · gmail
               </div>
-              <div className="text-[clamp(1.5rem,5.5vw,4.5rem)] font-medium tracking-[-0.025em] leading-[1.05] break-all md:break-normal">
+              <div className="text-[clamp(1.5rem,5.5vw,4.5rem)] font-bold tracking-[-0.025em] leading-[1.05] break-all md:break-normal">
                 <span className="text-fg">workaddressjosh</span>
                 <span className="text-muted">@</span>
                 <span className="text-fg-soft">gmail.com</span>
@@ -166,24 +191,37 @@ export function Contact() {
               </div>
             </div>
 
-            <div
-              className="hidden md:flex h-16 w-16 flex-none items-center justify-center rounded-full border border-line text-fg-soft transition-colors duration-300 group-hover:border-accent group-hover:text-accent"
-              aria-hidden
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1"
-              >
-                <path
-                  d="M5 15L15 5M15 5H7M15 5V13"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="square"
+            {/* Big Gmail Logo & arrow on the right */}
+            <div className="flex items-center gap-4 md:gap-6 flex-none self-end md:self-center">
+              <div className="relative h-20 w-24 md:h-24 md:w-32 flex-none transition-transform duration-300 group-hover:scale-105">
+                <Image
+                  src="/assets/gmail-logo-transparent.png"
+                  alt="Gmail"
+                  fill
+                  sizes="(min-width: 768px) 128px, 96px"
+                  className="object-contain"
                 />
-              </svg>
+              </div>
+
+              <div
+                className="hidden md:flex h-14 w-14 flex-none items-center justify-center rounded-full border border-line text-fg-soft transition-colors duration-300 group-hover:border-accent group-hover:text-accent"
+                aria-hidden
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className="transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1"
+                >
+                  <path
+                    d="M5 15L15 5M15 5H7M15 5V13"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="square"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </motion.a>
@@ -219,38 +257,59 @@ export function Contact() {
                 },
               }}
               whileHover={{ y: -2 }}
-              className="group relative block rounded-lg border border-line bg-bg-soft/40 p-5 transition-colors duration-300 hover:border-accent/40 hover:bg-bg-soft/70"
+              className={`group relative block rounded-lg border p-5 transition-colors duration-300 ${s.bg} ${s.border} ${s.hoverBorder}`}
               data-cursor="hover"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+              {/* Arrow in top right */}
+              <div
+                className={`absolute top-4 right-4 z-10 transition-colors duration-300 ${s.arrowClass}`}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  className="transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                >
+                  <path
+                    d="M3 11L11 3M11 3H5M11 3V9"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="square"
+                  />
+                </svg>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={`font-mono text-[10px] uppercase tracking-[0.25em] ${s.labelClass}`}
+                  >
                     // {s.platform}
                   </div>
-                  <div className="mt-2 text-lg md:text-xl font-medium text-fg">
+                  <div
+                    className={`mt-2 text-xl md:text-2xl font-bold tracking-tight ${s.textClass}`}
+                  >
                     {s.handle}
                   </div>
-                  <div className="mt-1 font-mono text-[10.5px] text-muted leading-snug">
-                    <span className="text-line">// </span>
+                  <div className={`mt-1 font-mono text-[10.5px] leading-snug ${s.subClass}`}>
+                    <span className="opacity-50">// </span>
                     {s.label}
                   </div>
                 </div>
-                <div className="flex-none text-fg-soft group-hover:text-accent transition-colors duration-300">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    className="transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  >
-                    <path
-                      d="M3 11L11 3M11 3H5M11 3V9"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="square"
+
+                {/* Big Logo on the right side */}
+                {s.logo && (
+                  <div className="relative h-20 w-20 md:h-24 md:w-24 shrink-0 transition-transform duration-300 group-hover:scale-105">
+                    <Image
+                      src={s.logo}
+                      alt={s.platform}
+                      fill
+                      sizes="(min-width: 768px) 96px, 80px"
+                      className="object-contain"
                     />
-                  </svg>
-                </div>
+                  </div>
+                )}
               </div>
             </motion.a>
           ))}

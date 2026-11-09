@@ -217,3 +217,34 @@ body {
     transition: none;
   }
 }
+
+/*
+ * Life multiverse hooks.
+ * - A world can replace the site cursor with its own by marking an element
+ *   data-site-cursor="hide" (the dot + ring fade out while hovering it).
+ * - .riso-grain is the shared printed-ink grain overlay.
+ */
+html:has([data-site-cursor="hide"]:hover) .cursor-dot,
+html:has([data-site-cursor="hide"]:hover) .cursor-ring {
+  opacity: 0 !important;
+}
+
+.riso-grain {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.2;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  animation: riso-grain 0.5s steps(3) infinite;
+}
+
+@keyframes riso-grain {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-3%, 2%); }
+  66% { transform: translate(2%, -3%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .riso-grain { animation: none; }
+}

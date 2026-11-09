@@ -63,29 +63,7 @@ export default async function Image() {
             gap: 8,
           }}
         >
-          <div
-            style={{
-              fontSize: 18,
-              color: "#5a5a5a",
-              textTransform: "uppercase",
-              letterSpacing: "0.25em",
-              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              marginBottom: 16,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
-                background: "#c5ff3d",
-              }}
-            />
-            currently shipping LazyBull
-          </div>
+
           <div
             style={{
               fontSize: 140,
@@ -133,12 +111,7 @@ export default async function Image() {
           </div>
           <span style={{ color: "#1f1f1f" }}>/</span>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ color: "#5a5a5a" }}>00</span>
-            <span>vc raised</span>
-          </div>
-          <span style={{ color: "#1f1f1f" }}>/</span>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ color: "#5a5a5a" }}>18</span>
+            <span style={{ color: "#5a5a5a" }}>19</span>
             <span>years old</span>
           </div>
         </div>

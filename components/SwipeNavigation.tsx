@@ -9,12 +9,19 @@ export function SwipeNavigation() {
   useEffect(() => {
     let touchStartX = 0;
     let touchEndX = 0;
+    let ignoreGesture = false;
+
+    // Interactive areas (drag-to-twist, scrubbers…) opt out with data-swipe-ignore.
+    const inIgnoredArea = (target: EventTarget | null) =>
+      target instanceof Element && !!target.closest("[data-swipe-ignore]");
 
     const handleTouchStart = (e: TouchEvent) => {
+      ignoreGesture = inIgnoredArea(e.target);
       touchStartX = e.changedTouches[0].screenX;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (ignoreGesture) return;
       touchEndX = e.changedTouches[0].screenX;
       handleSwipe();
     };
@@ -38,7 +45,7 @@ export function SwipeNavigation() {
     let isNavigating = false;
 
     const handleWheel = (e: WheelEvent) => {
-      if (isNavigating) return;
+      if (isNavigating || inIgnoredArea(e.target)) return;
 
       // Ignore if scrolling predominantly vertically
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {

@@ -52,27 +52,34 @@ export function ProjectRow({ project }: Props) {
         className="relative block w-full overflow-hidden text-left"
         aria-label={`open ${project.name} case study`}
       >
-        {/* IMAGE REVEAL (desktop, hover only) */}
-        <motion.div
+        {/* IMAGE BACKGROUND COVER (desktop, always visible) */}
+        <div
           aria-hidden
-          initial={false}
-          animate={{
-            clipPath: hovered ? "inset(0% 0% 0% 50%)" : "inset(0% 0% 0% 100%)",
-          }}
-          transition={{ duration: 0.7, ease }}
-          className="pointer-events-none absolute inset-0 hidden md:block"
+          className="pointer-events-none absolute inset-0 hidden md:block [clip-path:inset(0%_0%_0%_50%)]"
         >
           {project.previewImage ? (
-            <Image
-              src={project.previewImage}
-              alt=""
-              fill
-              sizes="50vw"
-              className="object-cover"
-              priority={false}
-            />
+            <motion.div
+              className="relative h-full w-full"
+              animate={{
+                scale: hovered ? 1.03 : 1,
+              }}
+              transition={{ duration: 0.6, ease }}
+            >
+              <Image
+                src={project.previewImage}
+                alt=""
+                fill
+                sizes="50vw"
+                className="object-cover"
+                priority={false}
+              />
+            </motion.div>
           ) : (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,#1a1a1a,#0a0a0a_70%)]">
+            <motion.div
+              animate={{ opacity: hovered ? 1 : 0 }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,#1a1a1a,#0a0a0a_70%)]"
+            >
               <div className="absolute right-12 top-1/2 -translate-y-1/2 text-right">
                 <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted">
                   no preview · archived
@@ -81,13 +88,13 @@ export function ProjectRow({ project }: Props) {
                   {project.name}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
           {/* fade the image's left edge into the bg so text stays readable */}
           <div className="absolute inset-y-0 left-1/2 w-32 bg-linear-to-r from-bg to-transparent" />
           {/* subtle darken overlay on the image */}
           <div className="absolute inset-y-0 left-1/2 right-0 bg-bg/15" />
-        </motion.div>
+        </div>
 
         {/* CONTENT */}
         <div className="relative grid grid-cols-12 items-center gap-4 px-6 py-8 md:px-12 md:py-12">

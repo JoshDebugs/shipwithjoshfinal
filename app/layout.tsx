@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s · shipwithjosh.com",
   },
   description:
-    "Builder out of Chandigarh. Three startups shipped, two paying, one for sale. Currently shipping LazyBull. AI-simplified trading.",
+    "Builder out of Chandigarh. Three startups shipped, two paying, one for sale.",
   // Vercel sets VERCEL_PROJECT_PRODUCTION_URL to the production domain when
   // a custom domain is attached. Falls back to the *.vercel.app deployment URL.
   // When shipwithjosh.com is wired to Vercel, this auto-resolves to it.
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Joshmann Singh. Builder",
     description:
-      "Builder out of Chandigarh. Three startups shipped. Currently shipping LazyBull.",
+      "Builder out of Chandigarh. Three startups shipped.",
     url: "/",
     siteName: "shipwithjosh",
     type: "website",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Joshmann Singh. Builder",
     description:
-      "Builder out of Chandigarh. Three startups shipped. Currently shipping LazyBull.",
+      "Builder out of Chandigarh. Three startups shipped.",
     creator: "@JoshDebugs",
   },
   robots: {

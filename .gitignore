@@ -12,3 +12,6 @@ build/
 .DS_Store
 
 next-env.d.ts
+
+# brainstorming companion mockups
+.superpowers/
