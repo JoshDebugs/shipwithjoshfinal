@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing id or status" }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), "lib", "roadmap-status.json");
+    const filePath = path.join(process.cwd(), "lib", "data", "roadmap-status.json");
     const fileContents = fs.readFileSync(filePath, "utf8");
     const statuses = JSON.parse(fileContents);
 

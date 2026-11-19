@@ -96,7 +96,7 @@ export function RevealAct({ rig }: { rig: Rig }) {
         const gone = smoothstep(range(p, hoA, hoB));
         const s = 1.38 - 0.38 * hit;
         place(stampWrap.current, smoothstep(range(p, st, st + 0.0035)) * (1 - gone), `translate(-50%, -50%) rotate(${(-2.6 + 1.1 * hit).toFixed(2)}deg) scale(${(s * (1 - 0.05 * gone)).toFixed(4)})`);
-        ridged.current?.ripple((p - st - 0.004) / 0.03, 5.5 * (g.size / 240));
+        ridged.current?.ripple((p - st - 0.004) / 0.03, rippleK(g.size));
 
         const ringT = range(p, st + 0.001, st + 0.032);
         place(halo.current, (1 - smoothstep(ringT)) * (ringT > 0 ? 0.62 : 0), `translate(-50%, -50%) scale(${(0.42 + 1.25 * easeOutCubic(ringT)).toFixed(4)})`);
@@ -203,8 +203,12 @@ export function RevealAct({ rig }: { rig: Rig }) {
         style={{ left: W / 2, top: H * 0.505, width: g.blockW, height: g.total, visibility: "hidden", willChange: "transform, opacity" }}
       >
         <h2 className="sr-only">I keep trying things.</h2>
+        {/* printed into a canvas: the slam and the ripple change it every frame */}
         <RidgedText
           ref={ridged}
+          print
+          swell={rippleK(g.size)}
+          live={!stage.lowPower}
           width={g.blockW}
           height={g.total}
           fill={RISO.sun}
@@ -215,6 +219,9 @@ export function RevealAct({ rig }: { rig: Rig }) {
     </>
   );
 }
+
+/** Strength (px) of the stamp's contour ripple at a type size. */
+const rippleK = (size: number) => 5.5 * (size / 240);
 
 /** Half the print's on-screen width at the reveal framing (desktop only). */
 function rigPrintHalf(W: number, H: number) {

@@ -26,6 +26,8 @@ export type Store = {
   ready: boolean;
   /** WebGL unavailable: the SVG fallback is showing. */
   fallback: boolean;
+  /** The SVG cube stands in while the WebGL scene is still loading (the poster may hand over to it). */
+  interim: boolean;
   moves: Move[];
   states: CubeState[];
   /** Fractional number of user moves currently shown (chases `target`). */
@@ -51,6 +53,7 @@ export function createStore(): Store {
   return {
     ready: false,
     fallback: false,
+    interim: false,
     moves: [],
     states: [solved()],
     applied: 0,

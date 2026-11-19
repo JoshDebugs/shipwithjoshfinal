@@ -356,29 +356,42 @@ export const PieceNode = memo(function PieceNode({ def, i, g, R }: { def: PieceD
           opacity: "var(--hk-debug, 0)",
         }}
       />
-      {def.tag && (
-        <span
-          ref={(el) => {
-            R.tags[i] = el;
-          }}
-          className="pointer-events-none absolute left-0"
-          style={{
-            transformOrigin: "0% 100%",
-            bottom: "100%",
-            marginBottom: Math.round(5 * g.u),
-            padding: `${Math.round(2 * g.u)}px ${Math.round(6 * g.u)}px`,
-            background: ink,
-            color: onDepth(def.depth),
-            fontFamily: FONT.mono,
-            fontWeight: 600,
-            fontSize: Math.max(10, Math.round(12 * g.u)),
-            lineHeight: 1.3,
-            whiteSpace: "nowrap",
-            opacity: "var(--hk-debug, 0)",
-          }}
-        >
-          {def.tag}
-        </span>
+    </div>
+  );
+});
+
+/**
+ * Inspector tags, one layer above the whole pile (a tag inside its piece would be
+ * buried by whatever lands on it). The engine pins each to its piece's box.
+ */
+export const TagLayer = memo(function TagLayer({ g, R }: { g: Geo; R: Refs }) {
+  return (
+    <div aria-hidden className="pointer-events-none absolute left-0 top-0">
+      {g.pieces.map((def, i) =>
+        def.tag ? (
+          <span
+            key={def.id}
+            ref={(el) => {
+              R.tags[i] = el;
+            }}
+            className="absolute left-0 top-0"
+            style={{
+              padding: `${Math.round(2 * g.u)}px ${Math.round(6 * g.u)}px`,
+              background: DEPTH[def.depth % 4],
+              color: onDepth(def.depth),
+              fontFamily: FONT.mono,
+              fontWeight: 600,
+              fontSize: Math.max(10, Math.round(12 * g.u)),
+              lineHeight: 1.3,
+              whiteSpace: "nowrap",
+              opacity: "var(--hk-debug, 0)",
+              visibility: "hidden",
+              willChange: "transform",
+            }}
+          >
+            {def.tag}
+          </span>
+        ) : null,
       )}
     </div>
   );

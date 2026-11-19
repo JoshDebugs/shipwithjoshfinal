@@ -172,7 +172,8 @@ export const wallFrag = (slabs: number) => /* glsl */ `
     // the rim catches the lamp as the shape locks: one travelling glint, on the outer edge only
     if (uGlint > .001) {
       float rim = smoothstep(.1, .012, d) * smoothstep(-.006, .012, d);
-      float sweep = exp(-pow((q.x + q.y * .42 - uGlintX) / 1.05, 2.));
+      float gk = (q.x + q.y * .42 - uGlintX) / 1.05;
+      float sweep = exp(-gk * gk);
       c = mix(c, mix(SUN, PAPER, .35), rim * uGlint * (.32 + sweep * .68) * fill);
     }
 
@@ -332,7 +333,7 @@ export const BOOK_FRAG = /* glsl */ `
     float s = smoothstep(.0, 1., E);
     vec3 dark = base * vec3(.16, .15, .2) + INK * .45;
     vec3 c = mix(dark, base * 1.04, s);
-    c += SUN * .05 * pow(s, 3.) * step(.5, an.y);
+    c += SUN * .05 * s * s * s * step(.5, an.y);
     c = mix(mix(INK, base, .18), c, uRoom);
     // lit from above by the screen once it is on
     if (uIgnite > .001) {
@@ -368,7 +369,7 @@ export const CONE_FRAG = /* glsl */ `
   void main(){
     vec3 V = normalize(cameraPosition - vP);
     float facing = pow(abs(dot(normalize(vN), V)), 2.4);
-    float len = smoothstep(0., .1, vLen) * pow(1. - vLen, 1.5);
+    float len = smoothstep(0., .1, vLen) * pow(max(1. - vLen, 0.), 1.5);
     float n = .75 + .4 * vnoise(vP.xy * 1.5 + vec2(uTime * .08, uTime * .05)) * vnoise(vP.yz * 2.3 - uTime * .06);
     float a = uPower * facing * len * n * uConeGain;
     gl_FragColor = vec4(mix(SUN, PAPER, .35) * a, a);
@@ -426,7 +427,7 @@ export const LAMP_FRAG = /* glsl */ `
   void main(){
     vec3 V = normalize(cameraPosition - vW);
     vec3 N = normalize(vN);
-    float rim = pow(1. - abs(dot(N, V)), 2.4);
+    float rim = pow(max(1. - abs(dot(N, V)), 0.), 2.4);
     float sky = smoothstep(-.1, 1., N.y);
     vec3 edge = mix(INK, SUN, .72);
     vec3 c = mix(INK, edge, clamp(uPower, 0., 1.) * (rim * 1.05 + sky * .34));

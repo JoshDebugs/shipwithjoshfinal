@@ -14,16 +14,18 @@
  * circle covers the stage, while the outgoing world drifts toward the viewer
  * and dims. Only the current world and its neighbours are mounted.
  *
- * The section starts 100vh early (negative margin) so its stage sticks at the
- * exact moment the hero's stage releases; the first segment ("bridge")
- * repeats the hero's final frame, so the hand-off is invisible.
+ * The section overlaps the hero (negative margin) so its stage sticks the
+ * moment the hero has finished typing "Here's the gist of it.". The first
+ * segment ("bridge") is transparent: the hero's own frame stays pinned
+ * underneath it, so the line is never drawn twice, and the first portal opens
+ * out of its full stop.
  *
  * With prefers-reduced-motion the film is replaced by each world's Static
  * composition in normal document flow.
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { useMotionValue, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from "framer-motion";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useMotionValue, useMotionValueEvent, useTransform, type MotionValue } from "framer-motion";
 import { useLenis } from "lenis/react";
 import { WORLDS } from "@/components/life/worlds/registry";
 import { FONT_VARIABLES } from "./fonts";
@@ -31,11 +33,19 @@ import { RISO } from "./palette";
 import { applyPortalStyles, portalFrame, readOrigin, type PortalOrigin } from "./portal";
 import { StageProvider, WorldProvider, useIsoLayoutEffect, type Stage, type WorldRuntime } from "./runtime";
 import { WorldHUD } from "./WorldHUD";
+import { WorldBoundary } from "./WorldBoundary";
 import { clamp, range } from "./ease";
 import type { Presence } from "./types";
 
 /** Length of every portal dive, in stage heights. */
 const DIVE = 1;
+
+/**
+ * LifeHero's section is 440vh: 200vh of animation, its 100vh stage, and this
+ * much more during which its final frame stays pinned under the film's bridge
+ * and first dive (≥ 0.3 + 1 stage heights). Keep in sync with LifeHero's h-[440vh].
+ */
+const HERO_HOLD_VH = 140;
 
 const METAS = WORLDS.map((w) => w.meta);
 
@@ -78,8 +88,24 @@ function presenceOf(i: number, { c, diving }: Phase): Presence | null {
 
 type Origin = PortalOrigin & { c: number };
 
+const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeReduced(onChange: () => void) {
+  const m = window.matchMedia(REDUCED_QUERY);
+  m.addEventListener("change", onChange);
+  return () => m.removeEventListener("change", onChange);
+}
+
+/**
+ * prefers-reduced-motion without a hydration mismatch: the server and the
+ * hydrating client both render the film, then the client switches.
+ */
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED_QUERY).matches, () => false);
+}
+
 export function Multiverse() {
-  const reduced = useReducedMotion();
+  const reduced = usePrefersReducedMotion();
   if (reduced) return <StaticMultiverse />;
   return <Film />;
 }
@@ -95,6 +121,8 @@ function Film() {
   const dimRefs = useRef<(HTMLDivElement | null)[]>([]);
   const originRefs = useMemo(() => WORLDS.map(() => ({ current: null as HTMLElement | null })), []);
   const originCache = useRef<Origin | null>(null);
+  const originRetry = useRef(0);
+  const applyRef = useRef<(v: number) => void>(() => {});
 
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [lowPower, setLowPower] = useState(false);
@@ -186,16 +214,32 @@ function Film() {
       const iconId = METAS[c + 1].icon;
       if (!incoming || !inner || !iconId) return;
 
-      // where the portal is born: the outgoing world's registered origin (read once per dive)
-      if (!originCache.current || originCache.current.c !== c) {
-        originCache.current = { c, ...readOrigin(originRefs[c].current, stageEl, iconId, size.w, size.h) };
+      // Where the portal is born: the outgoing world's registered origin, read once per dive.
+      // A world still loading (a deep link straight into a dive) hasn't registered one yet:
+      // use the stage centre until it does, then measure it with the world unscaled.
+      let o = originCache.current;
+      if (!o || o.c !== c) {
+        const el = originRefs[c].current;
+        if (el && out) out.style.transform = "";
+        o = { c, ...readOrigin(el, stageEl, iconId, size.w, size.h) };
+        originCache.current = el ? o : null;
+        // look again shortly, even if the viewer isn't scrolling
+        if (!el && !originRetry.current) {
+          originRetry.current = window.setTimeout(() => {
+            originRetry.current = 0;
+            applyRef.current(u.get());
+          }, 200);
+        }
       }
-      const o = originCache.current;
       const f = portalFrame(eRaw, iconId, o, size.w, size.h);
       applyPortalStyles(incoming, inner, out, dimRefs.current[c], iconId, f, o);
     },
-    [originRefs, size.h, size.w],
+    [originRefs, size.h, size.w, u],
   );
+  useIsoLayoutEffect(() => {
+    applyRef.current = apply;
+  }, [apply]);
+  useEffect(() => () => window.clearTimeout(originRetry.current), []);
 
   useMotionValueEvent(u, "change", apply);
   // re-apply after layers mount/unmount or the stage resizes
@@ -241,10 +285,12 @@ function Film() {
     [size.w, size.h, lowPower],
   );
 
+  // Overlap the hero so the film begins (u = 0) the moment it finishes typing
+  // (200vh in); the hero stays pinned underneath until the first dive covers the stage.
   const sectionStyle = {
     "--stage-h": size.h ? `${size.h}px` : "100vh",
     height: `calc(var(--stage-h) * ${TOTAL + 1})`,
-    marginTop: "-100vh",
+    marginTop: `-${100 + HERO_HOLD_VH}vh`,
   } as React.CSSProperties;
 
   return (
@@ -338,7 +384,9 @@ const WorldLayer = memo(function WorldLayer({
     >
       <div ref={innerRef} className="absolute inset-0">
         <WorldProvider value={runtime}>
-          <World progress={progress} />
+          <WorldBoundary meta={meta}>
+            <World progress={progress} />
+          </WorldBoundary>
         </WorldProvider>
       </div>
       <div ref={dimRef} aria-hidden className="pointer-events-none absolute inset-0" style={{ background: RISO.ink, opacity: 0 }} />
@@ -350,21 +398,32 @@ function StaticMultiverse() {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
-    const read = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+    // the same box the film uses: the scroll container's viewport inside the site frame
+    const container = document.getElementById("scroll-container");
+    const read = () =>
+      setSize({ w: container?.clientWidth || window.innerWidth, h: container?.clientHeight || window.innerHeight });
     read();
+    const ro = container ? new ResizeObserver(read) : null;
+    if (container) ro?.observe(container);
     window.addEventListener("resize", read);
-    return () => window.removeEventListener("resize", read);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", read);
+    };
   }, []);
   const stage = useMemo<Stage>(
     () => ({ width: size.w, height: size.h, isMobile: size.w < 768, lowPower: true, reduced: true, ref }),
     [size.w, size.h],
   );
   return (
-    <div ref={ref} className={`relative z-[60] ${FONT_VARIABLES}`}>
+    // no film to pin the hero under: start where the hero's animation ends, sliding over its held frame
+    <div ref={ref} className={`relative z-[60] ${FONT_VARIABLES}`} style={{ marginTop: `-${HERO_HOLD_VH}vh` }}>
       <StageProvider value={stage}>
         {WORLDS.filter((w) => w.meta.id !== "bridge").map(({ meta, Static }) => (
           <section key={meta.id} aria-label={`${meta.label}: ${meta.title}`} className="relative" style={{ background: meta.bg }}>
-            <Static />
+            <WorldBoundary meta={meta} flow>
+              <Static />
+            </WorldBoundary>
           </section>
         ))}
       </StageProvider>

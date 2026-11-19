@@ -106,7 +106,7 @@ export function buildHall(mobile: boolean, paperAspect: number): HallGeo {
           r,
           phi,
           arc: k,
-          thread: h1 < 0.56 ? 0 : h1 < 0.8 ? 1 : 2,
+          thread: h1 < 0.44 ? 0 : h1 < 0.74 ? 1 : 2,
           placard: Math.floor(h2 * 12),
           wave: 0,
           local: 0,

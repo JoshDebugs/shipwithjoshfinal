@@ -43,8 +43,10 @@ body {
   color: var(--color-fg);
   font-family: var(--font-sans);
   overflow: hidden;
-  /* Prevent iOS rubber-band on the doc; the inner container handles scrolling. */
-  overscroll-behavior: none;
+  /* Prevent iOS rubber-band on the doc; the inner container handles scrolling.
+   * Vertical only: a sideways two-finger swipe stays the browser's own back /
+   * forward gesture (with its arrow). `overscroll-behavior: none` switched it off. */
+  overscroll-behavior-y: none;
 }
 
 /*
@@ -85,9 +87,22 @@ body {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  /* vertical only: sideways swipes must reach the page, where the browser turns them into back / forward */
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
+}
+
+/* Touch screens keep the site's own swipe (components/layout/SwipeNavigation.tsx): the
+ * browser's overscroll navigation would fire too there, and go back twice. */
+@media (hover: none) and (pointer: coarse) {
+  html,
+  body {
+    overscroll-behavior-x: none;
+  }
+  .scroll-container {
+    overscroll-behavior-x: contain;
+  }
 }
 
 .scroll-container::-webkit-scrollbar {
@@ -208,6 +223,11 @@ body {
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Set for one style flush on what a page opens on: shown at once (see ScrollReveal). */
+.reveal.is-instant {
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

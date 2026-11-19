@@ -149,7 +149,11 @@ function toonGradient() {
 /* ------------------------------------------------------------------ scene */
 
 export default function Scene({ progress, store, font, fontReal, cap, lowPower }: Props) {
-  const { gl, scene, camera, size } = useThree();
+  // narrow subscriptions: re-render only when these change, not on every R3F store update
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const size = useThree((s) => s.size);
   const cam = camera as THREE.PerspectiveCamera;
 
   const group = useRef<THREE.Group>(null);
@@ -377,7 +381,10 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
 
       /* group */
       const g = group.current;
+      // until the stickers are printed the poster / the SVG stand-in shows the cube: no bare ink cube beside it
+      const printed = !!stickerParts;
       if (g) {
+        g.visible = printed;
         g.position.set(0, r.lift, 0);
         tmp.yaw.setFromAxisAngle(AXES[1], r.yaw);
         tmp.flip.setFromAxisAngle(AXES[0], r.flip);
@@ -424,7 +431,7 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
         const mesh = moonRefs.current[i];
         if (!mesh) continue;
         const md = moons[i];
-        const appear = clamp(r.moons * 1.6 - i * 0.08);
+        const appear = printed ? clamp(r.moons * 1.6 - i * 0.08) : 0;
         const s = easeInOutCubic(appear) * md.size * (mobile ? 0.85 : 1);
         mesh.visible = s > 0.01;
         if (!mesh.visible) continue;
@@ -461,7 +468,7 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
       }
 
       /* shadow + light */
-      if (floorMat.current) floorMat.current.opacity = 0.2 * r.depth;
+      if (floorMat.current) floorMat.current.opacity = printed ? 0.2 * r.depth : 0;
       if (keyLight.current) keyLight.current.castShadow = r.depth > 0.01;
     },
     [progress, size.width, size.height, cam, scene, store, pose, states, tmp, moons, stickerParts],
@@ -469,12 +476,24 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
 
   useFrame((_, dt) => update(Math.min(dt, 0.05)));
 
-  // pre-warm: once the atlases exist, compile + draw one frame even while hidden ("next")
+  // pre-warm: once the atlases exist, compile + draw one frame even while hidden ("next").
+  // It runs once per print, not on every resize (a phone's URL bar resizes the stage while scrolling).
+  const updateRef = useRef(update);
+  updateRef.current = update;
   useEffect(() => {
     if (!stickerParts) return;
-    update(0);
+    const upd = updateRef.current;
+    upd(0);
     try {
       gl.compile(scene, camera);
+      // also build the shadow-casting variants (clearcoat, shadow catcher, toon, depth) that THE TURN switches on,
+      // so the first scroll past p≈.05 never stalls on a synchronous program link
+      if (keyLight.current) {
+        keyLight.current.castShadow = true;
+        gl.compile(scene, camera);
+        gl.render(scene, camera);
+      }
+      upd(0); // restores castShadow for the current progress
       gl.render(scene, camera);
     } catch {
       /* a lost context will simply render on the next frame */
@@ -483,7 +502,7 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
     return () => {
       store.ready = false;
     };
-  }, [stickerParts, gl, scene, camera, update, store]);
+  }, [stickerParts, gl, scene, camera, store]);
 
   /* free-play picking (pointer → layer twist) */
   useEffect(() => {
@@ -573,6 +592,8 @@ export default function Scene({ progress, store, font, fontReal, cap, lowPower }
       store.pick = null;
       store.dragTo = null;
       store.release = null;
+      // a twist still under the finger can't finish without this picking: drop it rather than leave a layer hanging
+      if (store.drag && !store.drag.settling) store.drag = null;
     };
   }, [store, cam, size.width, size.height]);
 

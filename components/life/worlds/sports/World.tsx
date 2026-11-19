@@ -31,7 +31,9 @@ const GRAIN = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/s
 
 export default function SportsWorld({ progress }: WorldProps) {
   const stage = useStage();
-  const L = useMemo(() => computeLayout(stage.width, stage.height, stage.isMobile, stage.lowPower), [stage.width, stage.height, stage.isMobile, stage.lowPower]);
+  // portrait stages (tall tablets too) use the phone composition: copy under the rink
+  const portrait = stage.isMobile || stage.height > stage.width * 1.1;
+  const L = useMemo(() => computeLayout(stage.width, stage.height, portrait, stage.lowPower), [stage.width, stage.height, portrait, stage.lowPower]);
   const use3D = !stage.lowPower;
   const store = useMemo(() => createStore(L.N, L.epsBase, use3D, L.mobile), [L.N, L.epsBase, use3D, L.mobile]);
 

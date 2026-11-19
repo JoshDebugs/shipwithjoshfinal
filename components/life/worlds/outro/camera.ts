@@ -5,7 +5,7 @@
  */
 import { clamp, easeInOutCubic, easeInOutSine, easeOutCubic, lerp, range } from "@/components/life/multiverse/ease";
 import { BEAT, valueSlot } from "./beats";
-import { CY, F, LAMBDA, MINUTIAE, onLevel, type MinutiaKind } from "./field";
+import { CY, F, LAMBDA, MINUTIAE, PH, onLevel, type MinutiaKind } from "./field";
 import { isStacked } from "./layout";
 
 export const RIDGE_H = 0.0105;
@@ -150,9 +150,18 @@ export type Docks = ReturnType<typeof docks>;
 export function docks(W: number, H: number) {
   const mobile = isStacked(W, H);
   const S0 = fullScale(W, H);
-  const reveal: Dock = { cx: 0, cy: mobile ? 0 : -0.012, sx: W / 2, sy: mobile ? H * 0.47 : H * 0.525, S: S0 };
+  // portrait tablets: the width-bound scale would push the print up under the site nav,
+  // so every stacked framing there is capped by height and its top edge kept below NAV
+  const tablet = mobile && W >= 600;
+  const NAV = 112;
+  const below = (cy: number, S: number, sy: number) => (tablet ? Math.max(sy, NAV + 10 + (PH / 2 - cy) * S) : sy);
+  const revealS = tablet ? Math.min(S0, (H - NAV - 170) / PH) : S0;
+  const reveal: Dock = mobile
+    ? { cx: 0, cy: 0, sx: W / 2, sy: below(0, revealS, H * 0.47), S: revealS }
+    : { cx: 0, cy: -0.012, sx: W / 2, sy: H * 0.525, S: S0 };
+  const domainsS = tablet ? Math.min(S0 * 1.02, (H * 0.6 - NAV) / 1.3) : S0 * 1.02;
   const domains: Dock = mobile
-    ? { cx: 0.02, cy: 0.1, sx: W / 2, sy: H * 0.32, S: S0 * 1.02 }
+    ? { cx: 0.02, cy: 0.1, sx: W / 2, sy: below(0.1, domainsS, H * 0.32), S: domainsS }
     : { cx: 0, cy: 0, sx: W * 0.7, sy: H * 0.525, S: S0 * 0.98 };
   const macroS = mobile ? S0 * 2.75 : S0 * 2.1;
   const value = VALUE_ORDER.map<Dock>((k) => {
@@ -161,11 +170,13 @@ export function docks(W: number, H: number) {
       ? { cx: m.x, cy: m.y, sx: W / 2, sy: H * 0.255, S: macroS }
       : { cx: m.x, cy: m.y, sx: W * 0.31, sy: H * 0.53, S: macroS };
   });
+  const finaleS = Math.min(H * (tablet ? 0.3 : 0.33), W * 0.68);
   const finale: Dock = mobile
-    ? { cx: 0, cy: 0.02, sx: W / 2, sy: H * 0.235, S: Math.min(H * 0.33, W * 0.68) }
+    ? { cx: 0, cy: 0.02, sx: W / 2, sy: below(0.02, finaleS, H * 0.235), S: finaleS }
     : { cx: 0, cy: -0.01, sx: W * 0.285, sy: H * 0.53, S: S0 * 0.93 };
   // phones: once NEXT has been read, the print grows back to fill the top of the end frame
-  const ending: Dock = mobile ? { cx: 0, cy: 0.03, sx: W / 2, sy: H * 0.31, S: Math.min(H * 0.4, W * 0.84) } : finale;
+  const endingS = Math.min(H * (tablet ? 0.36 : 0.4), W * 0.84);
+  const ending: Dock = mobile ? { cx: 0, cy: 0.03, sx: W / 2, sy: below(0.03, endingS, H * 0.31), S: endingS } : finale;
   return { reveal, domains, value, finale, ending, mobile, S0 };
 }
 
@@ -187,7 +198,7 @@ export function dockAt(p: number, d: Docks): Dock {
     return lerpDock(value[i - 1], value[i], easeInOutCubic(range(p, a, a + (b - a) * 0.4)));
   }
   if (p < BEAT.finale[0] + 0.03) return lerpDock(value[4], finale, easeInOutCubic(range(p, BEAT.values[1], BEAT.finale[0] + 0.03)));
-  return lerpDock(finale, ending, easeInOutCubic(range(p, BEAT.story[0] - 0.016, BEAT.story[0] + 0.002)));
+  return lerpDock(finale, ending, easeInOutCubic(range(p, BEAT.story[0] - 0.01, BEAT.story[0] + 0.006)));
 }
 
 /* -------------------------------------------------------------- the pose */

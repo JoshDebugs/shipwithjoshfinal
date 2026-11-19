@@ -51,10 +51,12 @@ function SlicedPoster() {
   const font = (1.35 * rowH) / CAP;
   const base = (top: number) => top + rowH / 2 + (CAP * font) / 2;
   const period = 166;
+  // slightly sloped sides, as the live trace squares off: reads as a wave, not a row of boxes
+  const slope = 12;
   let sq = `M0 ${R[2] - 3}`;
   for (let x = 0, up = true; x < W; x += period / 2, up = !up) {
     const y = up ? R[1] + 3 : R[2] - 3;
-    sq += ` L${x} ${y} L${Math.min(W, x + period / 2)} ${y}`;
+    sq += ` L${Math.min(W, x + slope)} ${y} L${Math.min(W, x + period / 2)} ${y}`;
   }
   const micBox = waveH * 0.86 / 0.83;
   const words = [
@@ -134,6 +136,7 @@ export default function AnchoringStatic() {
               <div className="absolute left-0 top-0" style={{ transform: `scale(${knobScale})`, transformOrigin: "0 0" }}>
                 <Knob vol={11} circled={1} />
               </div>
+              <span className="sr-only">{COPY.scrawl}</span>
             </div>
             <div className="flex flex-col gap-5">
               <p style={{ fontFamily: ANYBODY, fontVariationSettings: axes(58, 140), fontSize: isMobile ? 32 : 44, lineHeight: 1 }}>{COPY.whisper}</p>
@@ -204,7 +207,9 @@ export default function AnchoringStatic() {
       <div className="relative overflow-hidden" style={{ background: FLOOD }}>
         <Dots ink={RISO.cobalt} angle={15} cell={30} dot={26} side="right" reach="38%" opacity={0.85} />
         <div className="relative mx-auto flex max-w-[1180px] flex-col gap-10 px-6 pb-24 pt-16 md:px-12 md:pt-20">
-          <SlicedPoster />
+          <h2 style={{ margin: 0 }}>
+            <SlicedPoster />
+          </h2>
           <div className="flex flex-col items-start gap-8 md:flex-row md:items-center md:justify-between">
             <p
               className="inline-block"

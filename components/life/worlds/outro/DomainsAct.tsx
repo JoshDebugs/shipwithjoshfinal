@@ -11,12 +11,13 @@ import { clamp, easeInOutCubic, range, smoothstep } from "@/components/life/mult
 import { alpha, mix, RISO } from "@/components/life/multiverse/palette";
 import { usePointer, useStage, useTicker } from "@/components/life/multiverse/runtime";
 import { BEAT } from "./beats";
-import { printToStage } from "./camera";
+import { docks, printToStage } from "./camera";
 import { DOMAINS, HONEST } from "./copy";
 import type { V2 } from "./field";
 import { fade, place, windowed } from "./fx";
 import { BIG, MONO, SERIF, desk, isStacked, phone } from "./layout";
 import type { Rig } from "./rig";
+import { svgAdvance, usePathPrint } from "./pathPrint";
 import { SVG_U, arcTable, crestLine, pathD, pointAtArc } from "./ridges";
 
 const WALK_CREST = 17;
@@ -42,7 +43,7 @@ function microprint() {
   const crests = [WALK_CREST, ...FILL_CRESTS].map((n, i) => {
     const pts = i === 0 ? walk : crestLine(n, 90 + n * 37, 359, 420);
     const len = arcTable(pts).at(-1) ?? 0;
-    return { n, d: pathD(pts), text: run.repeat(Math.ceil(len / (run.length * ADV))) };
+    return { n, pts, d: pathD(pts), text: run.repeat(Math.ceil(len / (run.length * ADV))) };
   });
   const way: V2[] = mids.map((m) => pointAtArc(walk, arcs, m * ADV));
   return { crests, way };
@@ -61,7 +62,27 @@ export function DomainsAct({ rig }: { rig: Rig }) {
   const mag = stacked ? 3.1 : 2.75;
 
   const microWrap = useRef<HTMLDivElement>(null);
+  const microLayer = useRef<HTMLDivElement>(null);
   const microSvg = useRef<SVGSVGElement>(null);
+  const microCanvas = useRef<HTMLCanvasElement>(null);
+
+  // The microprint, printed into a canvas once its face is in (the SVG shows until then): the
+  // camera's dolly into the domains rescales it every frame while it fades in.
+  usePathPrint(
+    microSvg,
+    microCanvas,
+    (text) => {
+      const size = FS * SVG_U;
+      const d = docks(W, H);
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      return {
+        runs: print.crests.map((c) => ({ pts: c.pts, text: c.text })),
+        style: { family: getComputedStyle(text).fontFamily, weight: 600, size, spacing: 0, dy: 0.34 * size, fill: alpha(RISO.ink, 0.92), advance: svgAdvance(text) },
+        scale: (Math.max(d.reveal.S, d.domains.S) / SVG_U) * dpr,
+      };
+    },
+    [print, W, H],
+  );
   const loupe = useRef<HTMLDivElement>(null);
   const loupeSvg = useRef<SVGSVGElement>(null);
   const loupeFrame = useRef<HTMLDivElement>(null);
@@ -74,6 +95,7 @@ export function DomainsAct({ rig }: { rig: Rig }) {
   // the mouse can take the loupe; `hold` eases between the scroll path and the hand
   const hand = useRef({ hold: 0, x: 0, y: 0 });
   const dragging = useRef(false);
+  const lastMask = useRef("");
 
   const sync = (dt: number) => {
     const p = rig.p;
@@ -122,13 +144,14 @@ export function DomainsAct({ rig }: { rig: Rig }) {
 
     const [sx, sy] = printToStage(f, W, H, lx, ly);
     const shown = R * open;
-    if (microWrap.current) {
+    if (microWrap.current && lastMask.current !== `${shown.toFixed(1)}|${sx.toFixed(1)}|${sy.toFixed(1)}`) {
+      lastMask.current = `${shown.toFixed(1)}|${sx.toFixed(1)}|${sy.toFixed(1)}`;
       const mask = `radial-gradient(circle ${shown.toFixed(1)}px at ${sx.toFixed(1)}px ${sy.toFixed(1)}px, transparent 97%, #000 100%)`;
       microWrap.current.style.maskImage = mask;
       microWrap.current.style.setProperty("-webkit-mask-image", mask);
     }
     fade(microWrap.current, open);
-    if (microSvg.current) microSvg.current.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0) scale(${(S / SVG_U).toFixed(5)})`;
+    if (microLayer.current) microLayer.current.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0) scale(${(S / SVG_U).toFixed(5)})`;
 
     // the glass and the magnified disc open as one iris
     place(loupe.current, 1, `translate3d(${(sx - R).toFixed(2)}px, ${(sy - R).toFixed(2)}px, 0) scale(${open.toFixed(3)})`);
@@ -165,9 +188,9 @@ export function DomainsAct({ rig }: { rig: Rig }) {
 
         // the print leaves for the left column only once this has cleared it
         const out = smoothstep(range(p, BEAT.toValues[0] - 0.014, BEAT.toValues[0] + 0.002));
-        const inA = smoothstep(range(p, ha + 0.008, ha + 0.022));
+        const inA = smoothstep(range(p, ha + 0.006, ha + 0.018));
         place(honestBlock.current, inA * (1 - out), `translate3d(0, ${((1 - inA) * 20 * k - out * 14 * k).toFixed(1)}px, 0)`);
-        if (honest2.current) honest2.current.style.opacity = smoothstep(range(p, ha + 0.022, ha + 0.034)).toFixed(3);
+        if (honest2.current) honest2.current.style.opacity = smoothstep(range(p, ha + 0.014, ha + 0.026)).toFixed(3);
 
         fade(scrim.current, stacked ? blockIn * (1 - out) : 0);
       })),
@@ -205,11 +228,14 @@ export function DomainsAct({ rig }: { rig: Rig }) {
         style={{ top: H * 0.56, background: `linear-gradient(180deg, ${alpha(RISO.ink, 0)}, ${alpha(RISO.ink, 0.92)} 22%, ${alpha(RISO.ink, 0.97)})`, visibility: "hidden" }}
       />
 
-      {/* microprint on the ridges */}
+      {/* microprint on the ridges (print units × SVG_U, placed and scaled with the print) */}
       <div ref={microWrap} aria-hidden className="pointer-events-none absolute inset-0" style={{ visibility: "hidden" }}>
-        <svg ref={microSvg} width={1} height={1} className="absolute left-0 top-0" style={{ overflow: "visible", transformOrigin: "0 0", willChange: "transform" }}>
-          {microText("mp")}
-        </svg>
+        <div ref={microLayer} className="absolute left-0 top-0" style={{ width: 1, height: 1, transformOrigin: "0 0", willChange: "transform" }}>
+          <svg ref={microSvg} width={1} height={1} className="absolute left-0 top-0" style={{ overflow: "visible" }}>
+            {microText("mp")}
+          </svg>
+          <canvas ref={microCanvas} style={{ display: "none" }} />
+        </div>
       </div>
 
       {/* the same microprint, magnified with the ridges under the glass */}

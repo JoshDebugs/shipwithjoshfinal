@@ -114,6 +114,8 @@ export function Captions({ progress, store, fr }: { progress: MotionValue<number
     if (play) {
       const on = p > K.flipEnd - 0.002 && p < K.playEnd;
       play.style.pointerEvents = on ? "auto" : "none";
+      // invisible buttons must leave the tab order too
+      play.style.visibility = p > K.flipEnd - 0.002 && p < 0.9 ? "visible" : "hidden";
       play.style.opacity = String(smoothstep(range(p, K.flipEnd + 0.004, K.flipEnd + 0.02)));
     }
   };
@@ -129,8 +131,8 @@ export function Captions({ progress, store, fr }: { progress: MotionValue<number
   ];
 
   const buttons = (
-    <div ref={playRef} className="mt-3 flex flex-col gap-2" style={{ opacity: 0, pointerEvents: "none" }} data-swipe-ignore>
-      <p style={{ ...lineFont, fontSize: mobile ? 28 : 30 }}>
+    <div ref={playRef} className="mt-3 flex flex-col gap-2" style={{ opacity: 0, pointerEvents: "none", visibility: "hidden" }} data-swipe-ignore>
+      <p aria-hidden style={{ ...lineFont, fontSize: mobile ? 28 : 30 }}>
         <Chunked text={COPY.play} reveal={rP} />
       </p>
       <div className="flex items-center gap-2">
@@ -161,7 +163,7 @@ export function Captions({ progress, store, fr }: { progress: MotionValue<number
             {b.label}
           </button>
         ))}
-        <span className="ml-1 font-mono text-[9px] uppercase leading-tight tracking-[0.16em]" style={{ color: alpha(RISO.ink, 0.55) }}>
+        <span aria-hidden className="ml-1 font-mono text-[11px] uppercase leading-tight tracking-[0.14em]" style={{ color: alpha(RISO.ink, 0.75) }}>
           {mobile ? "or drag a layer" : "or drag any layer"}
         </span>
       </div>
@@ -173,11 +175,11 @@ export function Captions({ progress, store, fr }: { progress: MotionValue<number
     return (
       <div ref={root} className="pointer-events-none absolute" style={{ left: box.x, top: box.y, width: box.w, height: box.h, zIndex: 5, color: RISO.ink, visibility: "hidden" }}>
         <div className="relative h-full">
-          <div ref={(el) => void (items.current[0] = el)} className={itemCls}>
+          <div ref={(el) => void (items.current[0] = el)} className={itemCls} aria-hidden>
             <Headline reveal={rHead} mobile />
           </div>
           {lines.map((l, i) => (
-            <div key={l.n} ref={(el) => void (items.current[i + 1] = el)} className={itemCls} style={{ opacity: 0 }}>
+            <div key={l.n} ref={(el) => void (items.current[i + 1] = el)} className={itemCls} style={{ opacity: 0 }} aria-hidden>
               <div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em]">
                 <span style={numStyle}>{l.n}</span>
                 <span style={{ color: alpha(RISO.ink, 0.5) }}>/ 03 · Scrambled at 14</span>
@@ -203,8 +205,10 @@ export function Captions({ progress, store, fr }: { progress: MotionValue<number
 
   return (
     <div ref={root} className="pointer-events-none absolute" style={{ left: box.x, top: box.y, width: box.w, zIndex: 5, color: RISO.ink, visibility: "hidden" }}>
-      <Headline reveal={rHead} />
-      <ol className="mt-7 flex flex-col">
+      <div aria-hidden>
+        <Headline reveal={rHead} />
+      </div>
+      <ol aria-hidden className="mt-7 flex flex-col">
         {lines.map((l, i) => (
           <li key={l.n} className="flex gap-4 py-3.5" style={{ borderTop: `1px solid ${alpha(RISO.ink, 0.16)}` }}>
             <span className="pt-[7px] font-mono text-[11px] tracking-[0.14em]" style={numStyle}>
@@ -235,10 +239,10 @@ function Headline({ reveal, mobile }: { reveal: Reveal; mobile?: boolean }) {
       <div className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: alpha(RISO.ink, 0.6) }}>
         World 03 · Rubik&apos;s · Age 14
       </div>
-      <h3 className="mt-2 uppercase" style={{ fontFamily: "var(--f-rubik-mono)", fontSize: mobile ? 38 : 46, lineHeight: 1.02, letterSpacing: "-0.01em" }}>
+      <p className="mt-2 uppercase" style={{ fontFamily: "var(--f-rubik-mono)", fontSize: mobile ? 38 : 46, lineHeight: 1.02, letterSpacing: "-0.01em", wordSpacing: "-0.28em" }}>
         {/* break after the scrambled word so the line never orphans "14." */}
         <Chunked text={COPY.headline.replace(" ", "\n")} reveal={reveal} />
-      </h3>
+      </p>
     </div>
   );
 }

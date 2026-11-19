@@ -53,8 +53,7 @@ export function ClipBand({ L, refs, idBase }: { L: Layout; refs: BandRefs; idBas
   return (
     <svg
       ref={refs.root}
-      aria-label={COPY.headline}
-      role="img"
+      aria-hidden
       className="pointer-events-none absolute inset-0"
       width={L.W}
       height={L.H}

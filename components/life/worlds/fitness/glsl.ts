@@ -20,6 +20,7 @@ void main() {
 }`;
 
 const COMMON = /* glsl */ `
+float sq(float x) { return x * x; }
 float hash12(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
   p3 += dot(p3, p3.yzx + 33.33);
@@ -264,7 +265,7 @@ void main() {
   float bloom = uEnv.z;
 
   // ---- the room: cold air, a lukewarm wall band, a colder floor
-  float Tbg = 0.052 + 0.05 * exp(-pow((px.y - uEnv.y) / (uStage.y * 0.3), 2.0))
+  float Tbg = 0.052 + 0.05 * exp(-sq((px.y - uEnv.y) / (uStage.y * 0.3)))
             * (1.0 - 0.45 * pow(abs(vUv.x - 0.5) * 2.0, 2.0));
   float below = smoothstep(floorY - 1.0, floorY + 1.0, px.y);
   Tbg = mix(Tbg, 0.034 + 0.03 * clamp((px.y - floorY) / max(uStage.y - floorY, 1.0), 0.0, 1.0), below);
@@ -308,7 +309,7 @@ void main() {
   vec2 hr = px - uHands.zw;
   float grip = uHandT.x * 0.7 * max(exp(-length(hl) / (fh * 0.035)), exp(-length(hr) / (fh * 0.035)));
   T = mix(T, 0.012 + grip, barM);
-  T = mix(T, 0.24, exp(-pow(db / (1.15 / uDpr + 0.55), 2.0)) * 0.85);
+  T = mix(T, 0.24, exp(-sq(db / (1.15 / uDpr + 0.55))) * 0.85);
   vec2 fist = vec2(uHandT.y * 1.12, uHandT.y * 0.86);
   float dh = min(sdRoundBox(hl, fist, uHandT.y * 0.6), sdRoundBox(hr, fist, uHandT.y * 0.6));
   float hm = smoothstep(aa, -aa, dh);
@@ -320,11 +321,11 @@ void main() {
     if (F.w <= 0.001) continue;
     float d = sdFood(i, (px - F.xy) / F.z) * F.z;
     T = mix(T, 0.02, smoothstep(aa, -aa, d) * F.w);
-    T = mix(T, 0.24, exp(-pow(d / (1.15 / uDpr + 0.55), 2.0)) * 0.85 * F.w);
+    T = mix(T, 0.24, exp(-sq(d / (1.15 / uDpr + 0.55))) * 0.85 * F.w);
   }
   if (uRing.w > 0.001) {
     float rr = length(px - uRing.xy) - uRing.z;
-    T += uRing.w * 0.34 * exp(-pow(rr / (fh * 0.032), 2.0));
+    T += uRing.w * 0.34 * exp(-sq(rr / (fh * 0.032)));
   }
 
   // ---- sweat flecks: evaporation reads cold
@@ -334,7 +335,7 @@ void main() {
     if (F.w <= 0.001) continue;
     float d = length(px - F.xy) - F.z * clamp(F.w * 1.6, 0.0, 1.0);
     T = mix(T, 0.03, smoothstep(aa, -aa, d));
-    T = mix(T, 0.22, exp(-pow(d / 0.9, 2.0)) * 0.6 * F.w);
+    T = mix(T, 0.22, exp(-sq(d / 0.9)) * 0.6 * F.w);
   }
 
   // ---- auto-range: something hotter entered the frame

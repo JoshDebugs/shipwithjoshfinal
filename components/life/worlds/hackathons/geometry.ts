@@ -294,8 +294,9 @@ function desktopGeo(W: number, H: number): Geo {
     sheetLines: H < 800 ? 1 : 4,
     editor: roundRect({ x: W - m - 462 * u, y: Math.max(98, 100 * u), w: 462 * u, h: 172 * u }),
     sheet: roundRect({ x: (W - sheetW) / 2, y: Math.max(102, 106 * u), w: sheetW, h: 318 * u }),
-    toast: { x: m + 690 * u, y: rowY + 4 * u, w: 126 * u, h: 36 * u, gap: 8 * u },
-    pill: { x: m + 690 * u + 197 * u, y: rowY + 2 * u },
+    // the toast row ends short of the film HUD's corner (bottom-right 300 × 76)
+    toast: { x: m + 684 * u, y: rowY + 4 * u, w: 122 * u, h: 36 * u, gap: 6 * u },
+    pill: { x: m + 684 * u + 186 * u, y: rowY + 2 * u },
     terminal: roundRect({ x: m, y: floor - 22 * u - termH, w: termW, h: termH }),
     proj: { scale: projScale, cy: slideTop + (H * projScale) / 2, tilt: -7, persp: 1500 * u, lens: [W / 2, floor - 44 * u] },
     whorl: roundRect({ x: W / 2 - whorlS / 2, y: Math.max(116, H * 0.15), w: whorlS, h: whorlS }),

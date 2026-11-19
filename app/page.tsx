@@ -1,9 +1,9 @@
-import { Hero } from "@/components/Hero";
-import { Work } from "@/components/Work";
-import { Principles } from "@/components/Principles";
-import { Stack } from "@/components/Stack";
-import { Lab } from "@/components/Lab";
-import { Contact } from "@/components/Contact";
+import { Hero } from "@/components/home/Hero";
+import { Work } from "@/components/home/Work";
+import { Principles } from "@/components/home/Principles";
+import { Stack } from "@/components/home/Stack";
+import { Lab } from "@/components/home/Lab";
+import { Contact } from "@/components/home/Contact";
 
 /*
  * Sections render directly into <main>. The previous `SectionBox` wrapper

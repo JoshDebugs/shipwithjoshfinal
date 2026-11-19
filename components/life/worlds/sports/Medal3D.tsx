@@ -140,6 +140,20 @@ function Scene({ store }: { store: SportsStore }) {
       emissive: new THREE.Color(1, 1, 1),
       emissiveIntensity: 1,
     });
+    // Tone mapping crushes the ink ground of the neon face to near-black, which
+    // showed as a dark disc at the hand-off. While the face is unstruck it
+    // bypasses tone mapping, so it lands on screen as exactly the canvas it
+    // was copied from (ink + rosette) and the swap from the rink is invisible.
+    const raw = { value: 1 };
+    front.onBeforeCompile = (shader) => {
+      shader.uniforms.uRaw = raw;
+      shader.fragmentShader =
+        "uniform float uRaw;\n" +
+        shader.fragmentShader.replace(
+          "#include <tonemapping_fragment>",
+          "#if defined( TONE_MAPPING )\n\tgl_FragColor.rgb = mix( toneMapping( gl_FragColor.rgb ), gl_FragColor.rgb, uRaw );\n#endif",
+        );
+    };
     const back = new THREE.MeshPhysicalMaterial({
       ...base,
       iridescence: FACE_FILM,
@@ -157,7 +171,7 @@ function Scene({ store }: { store: SportsStore }) {
     const rim = new THREE.TorusGeometry(0.962, 0.03, 20, 180);
     const bail = new THREE.TorusGeometry(0.075, 0.022, 14, 48);
     bail.rotateY(Math.PI / 2);
-    return { fe, fh, fa, be, bh, ba, metal, front, back, face, edge, rim, bail };
+    return { fe, fh, fa, be, bh, ba, metal, front, back, face, edge, rim, bail, raw };
   }, [store]);
 
   useEffect(
@@ -167,7 +181,24 @@ function Scene({ store }: { store: SportsStore }) {
     [A],
   );
 
+  // a lost context can't be trusted to come back with its reflections (the
+  // one-shot environment is gone): hand the medal to the 2D emboss for good
+  const dead = useRef(false);
   useEffect(() => {
+    const el = gl.domElement;
+    const lost = () => {
+      dead.current = true;
+      store.gl3d.alive = false;
+      store.gl3d.ready = false;
+      // some browsers paint a lost canvas as an opaque placeholder: take it off screen
+      el.style.visibility = "hidden";
+    };
+    el.addEventListener("webglcontextlost", lost);
+    return () => el.removeEventListener("webglcontextlost", lost);
+  }, [gl, store]);
+
+  useEffect(() => {
+    if (dead.current) return;
     store.gl3d.alive = true;
     return () => {
       store.gl3d.alive = false;
@@ -180,6 +211,10 @@ function Scene({ store }: { store: SportsStore }) {
   useFrame(() => {
     const g = group.current;
     if (!g) return;
+    if (dead.current) {
+      g.visible = false;
+      return;
+    }
     // three ignores envMapIntensity for materials that fall back to scene.environment,
     // and the neon state needs the reflections off, so bind the map explicitly
     if (scene.environment && A.front.envMap !== scene.environment) {
@@ -246,6 +281,7 @@ function Scene({ store }: { store: SportsStore }) {
     g.rotation.set(pose.rotX + store.tilt.y * pose.tiltAmt, pose.rotY + store.tilt.x * pose.tiltAmt, -pose.rotZ);
 
     const m = pose.metal;
+    A.raw.value = 1 - m;
     A.front.color.setScalar(m);
     A.front.envMapIntensity = m;
     A.front.emissiveIntensity = pose.E;

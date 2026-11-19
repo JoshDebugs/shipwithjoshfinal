@@ -121,7 +121,9 @@ export default function Scene({ progress, rig, low, wobble }: Props) {
     [shared],
   );
 
-  const books = useMemo<Book[]>(() => buildBooks(low), [low]);
+  // portrait stages (phones and tablets) frame the compact pile, whatever the GPU
+  const compact = low || rig.mobile;
+  const books = useMemo<Book[]>(() => buildBooks(compact), [compact]);
   const bookGeo = useMemo(() => {
     const g = new THREE.BoxGeometry(1, 1, 1);
     const colors = new Float32Array(books.length * 3);
@@ -198,6 +200,12 @@ export default function Scene({ progress, rig, low, wobble }: Props) {
   }, [rig, slabCount]);
 
   const last = useRef({ p: -1, w: 0, rig: null as Rig | null, build: -1 });
+  // A resize across the lowPower / portrait line rebuilds the instanced pile (fresh
+  // identity matrices) and the wall materials: force the next frame to rewrite them all.
+  useEffect(() => {
+    last.current.build = -1;
+    last.current.p = -1;
+  }, [books, bookGeo, leftMat, backMat]);
   const frames = useRef(0);
   const stateRef = useRef<RoomState | undefined>(undefined);
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -345,10 +353,10 @@ export default function Scene({ progress, rig, low, wobble }: Props) {
   }
 
   function updatePile(build: number) {
-    if (build === last.current.build) return;
-    last.current.build = build;
     const mesh = pileRef.current;
     if (!mesh) return;
+    if (build === last.current.build) return;
+    last.current.build = build;
     for (let i = 0; i < books.length; i++) {
       const b = books[i];
       const t = b.delay < 0 ? 1 : Math.min(1, Math.max(0, (build - b.delay) / 0.11));

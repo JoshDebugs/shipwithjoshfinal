@@ -28,7 +28,9 @@ export function Seal({ size, id, style, className }: { size: number; id: string;
         <circle cx="150" cy="150" r="132" strokeWidth="2.2" />
         <circle cx="150" cy="150" r="93" strokeWidth="3" />
       </g>
-      <g transform="rotate(-96 150 150)">
+      {/* the path starts at 9 o'clock and runs clockwise: rotated so "2ND BEST DELEGATE" sits upright over the top arc
+          (the seal is printed at about -9°, which this +28° accounts for) */}
+      <g transform="rotate(28 150 150)">
         <text fill={RISO.pink} style={{ ...archivo(100, 820), fontSize: 21.5, letterSpacing: 1.2 }}>
           <textPath href={`#${id}`} startOffset="0" textLength={Math.PI * 2 * r * 0.992} lengthAdjust="spacing">
             {COPY.seal}
@@ -43,6 +45,9 @@ export function Seal({ size, id, style, className }: { size: number; id: string;
     </svg>
   );
 }
+
+/** Where the seal is printed on the card (centre, in card widths / heights): over its top-right corner, clear of JOSH. */
+export const SEAL_AT = { x: 0.94, y: 0.16 } as const;
 
 /**
  * MULTIPLE CONFERENCES, stamped again and again under Josh's card (positions

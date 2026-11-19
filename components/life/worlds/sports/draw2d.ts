@@ -261,6 +261,10 @@ const RIBBONS: [string, string, string][] = [
   [RISO.sun, RISO.pink, RISO.sun],
 ];
 
+/** The site nav pill + tagline (top centre, md and up): half-width and the band the ribbons fade through. */
+const NAV_HALF = 180;
+const NAV_FADE = [122, 176] as const;
+
 function ensureSprites(res: Res, L: Layout, store: SportsStore) {
   const key = `${store.front.version}|${L.w}x${L.h}`;
   if (res.spriteKey === key) return;
@@ -334,12 +338,21 @@ function drawReceipts(ctx: CanvasRenderingContext2D, res: Res, L: Layout, store:
         ctx.restore();
         continue;
       }
-      // ribbon: three vertical stripes, a fold shadow at the top
-      ctx.fillStyle = c0;
+      // ribbon: three vertical stripes, a fold shadow at the top. Under the
+      // site nav (top centre) they come out of the dark instead of crossing it.
+      const nf = L.mobile ? 0 : 1 - clamp((Math.abs(ax - L.w / 2) - NAV_HALF) / 140);
+      const ink = (c: string) => {
+        if (nf <= 0) return c;
+        const g = ctx.createLinearGradient(0, NAV_FADE[0] - ay, 0, NAV_FADE[1] - ay);
+        g.addColorStop(0, alpha(c, 1 - 0.9 * nf));
+        g.addColorStop(1, alpha(c, 1));
+        return g;
+      };
+      ctx.fillStyle = ink(c0);
       ctx.fillRect(-wr / 2, 0, wr, len);
-      ctx.fillStyle = c1;
+      ctx.fillStyle = ink(c1);
       ctx.fillRect(-wr / 6, 0, wr / 3, len);
-      ctx.fillStyle = c2;
+      ctx.fillStyle = ink(c2);
       ctx.fillRect(wr / 2 - wr / 6, 0, wr / 6, len);
       ctx.fillStyle = alpha(RISO.ink, 0.28);
       ctx.fillRect(-wr / 2, len - 3, wr, 3);

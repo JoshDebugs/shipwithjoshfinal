@@ -40,7 +40,8 @@ export function FreePlay({ progress, store }: { progress: MotionValue<number>; s
   };
 
   useProgress(progress, (p) => {
-    const on = p > K.flipEnd + 0.002 && p < K.playEnd - 0.003;
+    // dragging needs the scene's picking (absent on the no-WebGL fallback)
+    const on = !!store.pick && p > K.flipEnd + 0.002 && p < K.playEnd - 0.003;
     active.current = on;
     const el = overlay.current;
     if (el) {

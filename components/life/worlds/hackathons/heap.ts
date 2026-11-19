@@ -1,11 +1,13 @@
 /**
  * THE CRASH, baked.
  *
- * One deterministic matter-js run per stage size decides how every piece of
- * the poster falls and where it comes to rest. The whole run is recorded
- * (x, y, angle, impact per frame) and the engine thrown away, so at play time
- * the heap is only array lookups: scrolling back un-crashes the page exactly
- * and a resize simply re-bakes it. No physics state survives the bake.
+ * A deterministic matter-js run per stage size decides how every piece of
+ * the poster falls and where it comes to rest (if the hand-picked roll buries
+ * or upends the heading at that size, a few more rolls are baked and the most
+ * legible pile wins). The run is recorded (x, y, angle, impact per frame) and
+ * the engine thrown away, so at play time the heap is only array lookups:
+ * scrolling back un-crashes the page exactly and a resize simply re-bakes it.
+ * No physics state survives the bake.
  *
  * The pile lives on three parallel planes so a poster's worth of paper fits
  * under the error sheet: the cards at the back, the bars and chips in the
@@ -27,12 +29,20 @@ const SUB = 3;
 const SECONDS = 2.8;
 /** When the pile starts being talked down to rest (sim seconds). */
 const SETTLE_FROM = 1.7;
-/** The chosen rolls of the dice (picked by eye: chaos, but every letter reads). */
-const SALT_DESK = 9;
-const SALT_PHONE = 4;
+/**
+ * Rolls of the dice, the one picked by eye first. Every stage size bakes its
+ * own pile, and a roll that reads at 1440 × 900 can bury the heading at
+ * another size, so a pile that doesn't read (see legibility) rolls again.
+ */
+const SALTS_DESK = [9, 3, 14, 22] as const;
+const SALTS_PHONE = [4, 1, 11, 17] as const;
+/** The hand-picked roll wins near-ties. */
+const FIRST_BIAS = 0.75;
 
 export type Bake = {
   frames: number;
+  /** Frame where the real fall is over and only the last creep is left (see simFrame). */
+  knee: number;
   /** frames × pieces × CH: x, y, deg, impact. */
   data: Float32Array;
   /** Story time the hot reload picks each piece up. */
@@ -46,6 +56,28 @@ export type Bake = {
 export type Hit = { s: number; x: number; y: number; p: number };
 
 const MAX_HITS = 8;
+
+/**
+ * Share of the crash's scroll given to the fall itself (frames 0 → knee).
+ * The rest of the recording is the pile talking itself down to rest; played
+ * linearly it would eat half the scroll while nothing visibly moves.
+ */
+const FALL_SHARE = 0.8;
+
+/** Recorded frame (fractional) for story time s. */
+function simFrame(b: Pick<Bake, "frames" | "knee">, s: number) {
+  const x = clamp((s - B.crash) / B.simSpan);
+  const last = b.frames - 1;
+  if (b.knee >= last) return x * last;
+  return x < FALL_SHARE ? (x / FALL_SHARE) * b.knee : b.knee + ((x - FALL_SHARE) / (1 - FALL_SHARE)) * (last - b.knee);
+}
+
+/** Story time at which recorded frame f plays (inverse of simFrame). */
+function frameTime(b: Pick<Bake, "frames" | "knee">, f: number) {
+  const last = b.frames - 1;
+  const x = b.knee >= last ? f / Math.max(1, last) : f <= b.knee ? (f / Math.max(1, b.knee)) * FALL_SHARE : FALL_SHARE + ((f - b.knee) / (last - b.knee)) * (1 - FALL_SHARE);
+  return B.crash + x * B.simSpan;
+}
 
 type Made = { body: Matter.Body; ox: number; oy: number };
 
@@ -178,8 +210,110 @@ function wedges(g: Geo) {
   return cards.map((c, i) => ({ x: c.rect.x + c.rect.w * plan[i][0], h: plan[i][1] * u, w: 70 * u }));
 }
 
-/** A bake that can be sliced across idle time: the run is deterministic, so pausing changes nothing. */
+/** Sample points across a letter (fractions of its box) for the occlusion test. */
+const PROBE = [0.2, 0.5, 0.8];
+
+/** Is the stage point (x, y) inside piece j's settled footprint? */
+function covers(b: Bake, g: Geo, j: number, x: number, y: number) {
+  const n = g.pieces.length;
+  const off = (b.frames - 1) * n * CH + j * CH;
+  const p = g.pieces[j];
+  const dx = x - b.data[off];
+  const dy = y - b.data[off + 1];
+  if (p.kind === "sun" || p.kind === "sticker" || p.kind === "burst") return dx * dx + dy * dy < (p.rect.w / 2) * (p.rect.w / 2);
+  const a = (-b.data[off + 2] * Math.PI) / 180;
+  const lx = dx * Math.cos(a) - dy * Math.sin(a);
+  const ly = dx * Math.sin(a) + dy * Math.cos(a);
+  return Math.abs(lx) < p.rect.w / 2 && Math.abs(ly) < p.rect.h / 2;
+}
+
+/**
+ * How hard the settled heading is to read (lower is better): each letter's tilt
+ * away from upright (H, O, N and S read upside down too), how much of it is
+ * buried under pieces drawn over it, and letters that landed out of order
+ * along their original line.
+ */
+function legibility(b: Bake, g: Geo) {
+  const n = g.pieces.length;
+  const last = (b.frames - 1) * n * CH;
+  let cost = 0;
+  const lines: { idx: number; x: number }[][] = [[], []];
+  g.pieces.forEach((p, i) => {
+    if (p.kind !== "letter") return;
+    const a = b.data[last + i * CH + 2];
+    const period = p.text && p.text.length === 1 && "HONS".includes(p.text) ? 180 : 360;
+    let d = ((a % period) + period) % period;
+    d = Math.min(d, period - d);
+    cost += (d / 90) * (d / 90);
+    // buried: probe the letter's box against every piece painted after it
+    const r = (a * Math.PI) / 180;
+    const cx = b.data[last + i * CH];
+    const cy = b.data[last + i * CH + 1];
+    let hidden = 0;
+    for (const fx of PROBE) {
+      for (const fy of PROBE) {
+        const lx = (fx - 0.5) * p.rect.w;
+        const ly = (fy - 0.5) * p.rect.h;
+        const x = cx + lx * Math.cos(r) - ly * Math.sin(r);
+        const y = cy + lx * Math.sin(r) + ly * Math.cos(r);
+        for (let j = i + 1; j < n; j++) {
+          if (covers(b, g, j, x, y)) {
+            hidden++;
+            break;
+          }
+        }
+      }
+    }
+    const buried = hidden / (PROBE.length * PROBE.length);
+    cost += 2.5 * buried * buried;
+    const line = p.rect.y < g.head.lineY[1] - 1 ? 0 : 1;
+    lines[line].push({ idx: p.index, x: b.data[last + i * CH] });
+  });
+  for (const line of lines) {
+    for (let a = 0; a < line.length; a++) for (let c = a + 1; c < line.length; c++) if ((line[a].idx < line[c].idx) !== (line[a].x < line[c].x)) cost += 0.25;
+  }
+  return cost;
+}
+
+/** Bakes the candidate rolls in turn (sliceable) and keeps the most legible pile. */
 export class BakeJob {
+  private g: Geo;
+  private salts: readonly number[];
+  private k = 0;
+  private cur: BakeRun;
+  private best: { bake: Bake; cost: number } | null = null;
+  result: Bake | null = null;
+
+  constructor(g: Geo) {
+    this.g = g;
+    this.salts = g.mobile ? SALTS_PHONE : SALTS_DESK;
+    this.cur = new BakeRun(g, this.salts[0]);
+  }
+
+  /** Advance for about `ms`. True once the result is ready. */
+  run(ms: number) {
+    if (this.result) return true;
+    const end = performance.now() + ms;
+    for (;;) {
+      if (this.cur.run(Math.max(0, end - performance.now()))) {
+        const bake = this.cur.result!;
+        const cost = legibility(bake, this.g) - (this.k === 0 ? FIRST_BIAS : 0);
+        if (!this.best || cost < this.best.cost) this.best = { bake, cost };
+        const letters = this.g.pieces.filter((p) => p.kind === "letter").length;
+        this.k++;
+        if (this.k >= this.salts.length || this.best.cost <= letters * 0.5) {
+          this.result = this.best.bake;
+          return true;
+        }
+        this.cur = new BakeRun(this.g, this.salts[this.k]);
+      }
+      if (performance.now() >= end) return false;
+    }
+  }
+}
+
+/** One deterministic run of the fall for one roll of the dice. */
+class BakeRun {
   private engine: Matter.Engine;
   private made: Made[];
   private release: number[];
@@ -197,7 +331,7 @@ export class BakeJob {
   private salt: number;
   result: Bake | null = null;
 
-  constructor(g: Geo, salt: number = g.mobile ? SALT_PHONE : SALT_DESK) {
+  constructor(g: Geo, salt: number) {
     this.g = g;
     this.salt = salt;
     const { W, H, floor, pieces, u } = g;
@@ -315,6 +449,23 @@ export class BakeJob {
     const n = pieces.length;
     const frames = this.f;
 
+    // the knee: the last frame that still moves noticeably (summed over the pile)
+    const motion = new Float32Array(frames);
+    let peak = 0;
+    for (let f = 1; f < frames; f++) {
+      let sum = 0;
+      for (let i = 0; i < n; i++) {
+        const A = (f - 1) * n * CH + i * CH;
+        const C = f * n * CH + i * CH;
+        sum += Math.hypot(data[C] - data[A], data[C + 1] - data[A + 1]) + Math.abs(data[C + 2] - data[A + 2]) * 0.5;
+      }
+      motion[f] = sum;
+      if (sum > peak) peak = sum;
+    }
+    let knee = frames - 1;
+    while (knee > 1 && motion[knee] < peak * 0.05) knee--;
+    knee = Math.round(clamp(knee + 1, frames * 0.3, frames - 1));
+
     // highest point of the rest pose
     let top = floor;
     for (let i = 0; i < n; i++) {
@@ -333,15 +484,16 @@ export class BakeJob {
       springAt[i] = B.springA + clamp(dist * 0.6 + hash(i * 7.13 + 11) * 0.4) * B.springSpread;
     });
 
+    const timing = { frames, knee };
     const hits = this.hits
       .slice()
       .sort((a, b) => b.p - a.p)
       .slice(0, MAX_HITS)
       .sort((a, b) => a.f - b.f)
-      .map((h) => ({ s: B.crash + (h.f / Math.max(1, frames - 1)) * B.simSpan, x: h.x, y: h.y, p: h.p }));
+      .map((h) => ({ s: frameTime(timing, h.f), x: h.x, y: h.y, p: h.p }));
 
     Engine.clear(engine);
-    this.result = { frames, data, springAt, top, hits };
+    this.result = { frames, knee, data, springAt, top, hits };
   }
 }
 
@@ -356,7 +508,7 @@ export type Pose = { x: number; y: number; rot: number; impact: number };
 
 /** Where piece i is at story time s (s ≥ B.crash). */
 export function samplePose(b: Bake, n: number, i: number, s: number, out: Pose): Pose {
-  const f = clamp((s - B.crash) / B.simSpan) * (b.frames - 1);
+  const f = simFrame(b, s);
   const a = Math.floor(f);
   const t = f - a;
   const A = a * n * CH + i * CH;

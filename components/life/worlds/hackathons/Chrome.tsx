@@ -130,6 +130,8 @@ export function Bucket({ g, R }: { g: Geo; R: Refs }) {
 
 /** Clear of the film's HUD pill: bottom-right, about 300 wide on desktop. */
 const HUD_CLEAR = 330;
+/** On a phone the HUD pill (about 210 wide, 16 in from the right) docks inside the bar's right half. */
+const HUD_CLEAR_PHONE = 244;
 
 export function StatusBar({ g, R }: { g: Geo; R: Refs }) {
   const padded = COMMITS.map(([h, m]) => `${h} ${m}`).join("   ·   ");
@@ -152,15 +154,21 @@ export function StatusBar({ g, R }: { g: Geo; R: Refs }) {
     </span>
   );
   if (g.mobile) {
-    // two lines at the left; the film's HUD pill sits in the bar's right half
+    // two short lines at the left; the film's HUD pill docks in the bar's right half,
+    // so the text is sized to the room left of it (narrow phones drop "localhost")
+    const room = g.W - HUD_CLEAR_PHONE - 12;
+    const full = room / (COPY.url.length * 0.6) >= 8.5;
+    const url = full ? COPY.url : COPY.url.replace("localhost", "");
+    const urlFs = Math.min(10.5, room / (url.length * 0.6));
+    const stateFs = Math.min(10.5, room / (19 * 0.6));
     return (
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col justify-center"
-        style={{ height: g.status, padding: "0 12px", background: C.ink, color: C.paper, fontFamily: FONT.mono, fontSize: 10.5, lineHeight: 1.4, zIndex: 40 }}
+        style={{ height: g.status, padding: "0 12px", background: C.ink, color: C.paper, fontFamily: FONT.mono, lineHeight: 1.45, zIndex: 40 }}
       >
-        <div style={{ whiteSpace: "pre", color: alpha(C.paper, 0.72) }}>{COPY.url}</div>
-        <div style={{ color: C.sun, fontWeight: 600 }}>
+        <div style={{ whiteSpace: "pre", color: alpha(C.paper, 0.72), fontSize: urlFs }}>{url}</div>
+        <div style={{ color: C.sun, fontWeight: 600, fontSize: stateFs }}>
           {state}
           {caret}
         </div>
@@ -170,9 +178,11 @@ export function StatusBar({ g, R }: { g: Geo; R: Refs }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center overflow-hidden"
-      style={{ height: g.status, paddingRight: HUD_CLEAR, background: C.ink, color: C.paper, fontFamily: FONT.mono, fontSize: 12.5, zIndex: 40 }}
+      className="pointer-events-none absolute bottom-0 left-0 flex items-center"
+      style={{ width: g.W - HUD_CLEAR, height: g.status, background: C.ink, color: C.paper, fontFamily: FONT.mono, fontSize: 12.5, zIndex: 40, borderTopRightRadius: 12 }}
     >
+      {/* the floor carries on under the HUD's corner as a hairline, so the pile never rests on air */}
+      <i aria-hidden className="absolute top-0" style={{ left: "100%", width: HUD_CLEAR + 12, height: 2, marginLeft: -12, background: C.ink }} />
       <div className="flex shrink-0 items-center" style={{ padding: "0 16px", height: "100%", whiteSpace: "pre" }}>
         <span style={{ color: alpha(C.paper, 0.72) }}>{COPY.url} · </span>
         <span style={{ color: C.sun, fontWeight: 600 }}>{state}</span>

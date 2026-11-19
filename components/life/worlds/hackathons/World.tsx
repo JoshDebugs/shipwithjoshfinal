@@ -19,7 +19,7 @@ import { Engine, emptyRefs, type PointerRead } from "./engine";
 import { computeGeo } from "./geometry";
 import { meta } from "./meta";
 import { Editor, ErrorSheet, RawPage, Terminal, Toasts } from "./Panels";
-import { PieceNode } from "./Pieces";
+import { PieceNode, TagLayer } from "./Pieces";
 import { Slides } from "./Slides";
 
 export default function HackathonsWorld({ progress }: WorldProps) {
@@ -123,6 +123,7 @@ export default function HackathonsWorld({ progress }: WorldProps) {
           <PieceNode key={def.id} def={def} i={i} g={g} R={R} />
         ))}
         <Rings g={g} R={R} />
+        <TagLayer g={g} R={R} />
         <Slides g={g} R={R} />
       </div>
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ScrollReveal } from "@/components/ScrollReveal";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 // ─────────────────────────────────────────────────────────────────
 // /now page — Joshmann's monthly snapshot.

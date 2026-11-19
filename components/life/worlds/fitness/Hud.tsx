@@ -60,6 +60,7 @@ export function Hud({ g, refs, onMode }: { g: Geo; refs: HudRefs; onMode: () => 
               ref={(el) => {
                 refs.nuc = el;
               }}
+              aria-hidden
               style={{ opacity: 0, color: C.sun }}
             >
               NUC
@@ -202,8 +203,20 @@ function Reticle({ g, refs, small }: { g: Geo; refs: HudRefs; small: number }) {
         ref={(el) => {
           refs.reading = el;
         }}
+        aria-hidden
         className="absolute whitespace-nowrap"
-        style={{ left: s / 2 + 8 * g.u, top: -s / 2 - 1, fontSize: small, letterSpacing: "0.08em" }}
+        style={{
+          left: s / 2 + 5 * g.u,
+          top: -s / 2 - 3,
+          fontSize: small,
+          letterSpacing: "0.08em",
+          lineHeight: 1.25,
+          // stays paper on its own ink chip: readable over the cold field and the white-hot body alike
+          color: C.paper,
+          background: alpha(C.ink, 0.62),
+          padding: `${1 * g.u}px ${4 * g.u}px`,
+          borderRadius: 2,
+        }}
       >
         COLD
       </span>
@@ -242,7 +255,7 @@ function Scale({ g, refs, small }: { g: Geo; refs: HudRefs; small: number }) {
           style={{ width: 0, height: 0, willChange: "transform" }}
         >
           <div className="absolute" style={{ right: th / 2 + 3 * u, top: -1, width: 14 * u, height: 2, background: C.paper }} />
-          <div className="absolute whitespace-nowrap" style={{ ...label, right: th / 2 + 22 * u, top: -small * 0.68, color: C.paper }}>
+          <div aria-hidden className="absolute whitespace-nowrap" style={{ ...label, right: th / 2 + 22 * u, top: -small * 0.68, color: C.paper }}>
             JOSH
           </div>
         </div>

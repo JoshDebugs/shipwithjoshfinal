@@ -36,6 +36,10 @@ export function Mic({ refs, arcs = 0, onTap }: { refs?: MicRefs; arcs?: number; 
           type="button"
           aria-label="Tap the mic"
           onPointerDown={onTap}
+          // keyboard activation (Enter / Space) fires click with detail 0; pointer clicks already thumped on pointerdown
+          onClick={(e) => {
+            if (e.detail === 0) onTap();
+          }}
           className="absolute rounded-full"
           style={{ left: 18, top: 4, width: 54, height: 92, cursor: "pointer", background: "transparent", touchAction: "manipulation" }}
         />

@@ -180,22 +180,22 @@ export function Printer({ g, R, fine }: { g: Geo; R: Refs; fine: boolean }) {
         </div>
       )}
 
-      {/* diegetic readouts */}
-      <div className="absolute flex items-center" style={{ left: (g.mobile ? 16 : 28) * u, top: (TOP + (g.mobile ? 8 : 10)) * u, gap: 12 * u, color: alpha(C.paper, 0.55) }}>
+      {/* diegetic readouts (phones: compact, so the LCD ends left of the HUD pill once the band pans down) */}
+      <div className="absolute flex items-center" style={{ left: (g.mobile ? 10 : 28) * u, top: (TOP + (g.mobile ? 8 : 10)) * u, gap: (g.mobile ? 6 : 12) * u, color: alpha(C.paper, 0.55) }}>
         <span
           ref={(el) => {
             R.led = el;
           }}
           aria-hidden
           className="shrink-0 rounded-full"
-          style={{ width: 7 * u, height: 7 * u, background: C.sun, boxShadow: `0 0 ${8 * u}px ${C.sun}` }}
+          style={{ width: (g.mobile ? 6 : 7) * u, height: (g.mobile ? 6 : 7) * u, background: C.sun, boxShadow: `0 0 ${8 * u}px ${C.sun}` }}
         />
         <span
           aria-hidden
           className="flex items-center"
           style={{
-            height: 24 * u,
-            padding: `0 ${10 * u}px`,
+            height: (g.mobile ? 22 : 24) * u,
+            padding: `0 ${(g.mobile ? 7 : 10) * u}px`,
             background: C.ink,
             borderRadius: 3 * u,
             boxShadow: `inset 0 0 0 1px ${alpha(C.paper, 0.1)}`,
@@ -203,9 +203,9 @@ export function Printer({ g, R, fine }: { g: Geo; R: Refs; fine: boolean }) {
             fontFamily: "var(--f-doto)",
             fontWeight: 900,
             fontVariationSettings: '"ROND" 100',
-            fontSize: 15 * u,
+            fontSize: (g.mobile ? 12.5 : 15) * u,
             letterSpacing: "0.06em",
-            minWidth: (g.mobile ? 128 : 150) * u,
+            minWidth: (g.mobile ? 106 : 150) * u,
             textShadow: `0 0 ${6 * u}px ${alpha(C.sun, 0.6)}`,
           }}
         >
@@ -227,9 +227,12 @@ export function Printer({ g, R, fine }: { g: Geo; R: Refs; fine: boolean }) {
       </div>
       {g.mobile && (
         <div
+          ref={(el) => {
+            R.hint = el;
+          }}
           aria-hidden
           className="absolute"
-          style={{ left: 16 * u, top: (TOP + 40) * u, color: alpha(C.paper, 0.5), fontFamily: "var(--f-space-mono)", fontSize: 9.5 * u, letterSpacing: "0.14em" }}
+          style={{ left: 10 * u, top: (TOP + 40) * u, color: alpha(C.paper, 0.5), fontFamily: "var(--f-space-mono)", fontSize: 9.5 * u, letterSpacing: "0.14em" }}
         >
           TAP ANYWHERE: STICKERS
         </div>

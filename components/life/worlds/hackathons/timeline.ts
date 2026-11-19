@@ -3,10 +3,12 @@
  * the world's progress p (0 = title card, 1 = exit frame), so scrolling back
  * un-crashes the page exactly.
  *
- * Most beats live on a "story clock" s. Until the end of PITCH, s = p. Then
- * REPEAT literally rewinds the story: `git reset --hard` types itself and s
- * runs back from the last slide to the raw v0.0.1 page (VHS on top), before
+ * The world's progress is first paced (`pace(p)` → beat time q, see PACE),
+ * then most beats live on a "story clock" s. Until the end of PITCH, s = q.
+ * Then REPEAT literally rewinds the story: `git reset --hard` types itself and
+ * s runs back from the last slide to the raw v0.0.1 page (VHS on top), before
  * the motto resolves and the whorl is left behind for the Outro's portal.
+ * The REPEAT beats (R) are on q directly.
  */
 import { clamp, easeInOutCubic, easeOutCubic, lerp, range } from "@/components/life/multiverse/ease";
 
@@ -114,7 +116,53 @@ export const R = {
   gitLineB: 0.992,
 } as const;
 
-/** Story time for a progress value (identity, then the rewind). */
+/**
+ * Scroll pacing. The beats above are authored on one clock (`q`); the world's
+ * progress p is remapped onto it so the BUILD and the hot reload go by a
+ * touch quicker and every PITCH slide gets a long, still read (≈ 8% of the
+ * world each). Piecewise linear, monotonic; knots are [p, q]. Slopes only
+ * change inside holds, so nothing visibly changes speed mid-move.
+ */
+const PACE: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [0.048, 0.048],
+  [0.205, 0.238],
+  [0.255, 0.29],
+  // the crash gets the most scroll of any move: the fall itself, then the last creep and the sheet
+  [0.305, 0.351],
+  [0.38, 0.41],
+  [0.43, 0.461],
+  [0.47, 0.522],
+  [0.535, 0.602],
+  [0.563, 0.634],
+  // slide 1 (IIT Roorkee · ~4th) holds
+  [0.652, 0.686],
+  [0.67, 0.706],
+  // slide 2 (Ashoka · 2nd) holds
+  [0.755, 0.774],
+  [0.788, 0.814],
+  // slide 3 (Smart India · participated.) holds, then the terminal types over it
+  [0.84, 0.832],
+  [0.878, 0.874],
+  [0.938, 0.94],
+  [1, 1],
+];
+
+/** Beat time q for the world's progress p. */
+export function pace(p: number): number {
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  for (let i = 1; i < PACE.length; i++) {
+    const [p1, q1] = PACE[i];
+    if (p <= p1) {
+      const [p0, q0] = PACE[i - 1];
+      return q0 + ((p - p0) / (p1 - p0)) * (q1 - q0);
+    }
+  }
+  return 1;
+}
+
+/** Story time for a (paced) beat time q (identity, then the rewind). */
 export function story(p: number): number {
   if (p <= B.sEnd) return p;
   if (p < R.rewA) return B.sEnd;

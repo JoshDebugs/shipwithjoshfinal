@@ -122,6 +122,14 @@ vec4 drawEye(vec2 p, float px, float open, vec2 gaze, vec3 iris, float heart, fl
       dl = min(dl, sdSeg(p, a, a + normalize(vec2(x * 1.7, dir)) * 0.07));
     }
     inkA = max(inkA, lashes * fill(dl - t * 0.42, aa));
+    // big shut eyes keep a faint upper-lid crease, so the lash line reads as
+    // a closed eye rather than a mouth
+    float shut = lashes * (1.0 - smoothstep(0.06, 0.45, open));
+    if (shut > 0.001 && p.y < 0.0) {
+      float dc = abs(sdAlmond(p) + t * 0.2) - t * 0.26;
+      float tip = smoothstep(EW * 0.96, EW * 0.6, abs(p.x));
+      inkA = max(inkA, shut * 0.7 * tip * fill(dc, aa));
+    }
   }
   acc = over(acc, INK, inkA);
 

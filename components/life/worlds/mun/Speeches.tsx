@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { Fragment, useRef } from "react";
 import type { MotionValue } from "framer-motion";
 import { useProgress } from "@/components/life/multiverse/runtime";
 import { RISO, alpha } from "@/components/life/multiverse/palette";
@@ -30,9 +30,12 @@ function Words({ text }: { text: string }) {
   return (
     <>
       {parts.map((w, i) => (
-        <span key={i} className="inline-block" style={{ opacity: 0, marginRight: i < parts.length - 1 ? "0.24em" : 0 }}>
-          {w}
-        </span>
+        <Fragment key={i}>
+          <span className="inline-block" style={{ opacity: 0 }}>
+            {w}
+          </span>
+          {i < parts.length - 1 ? " " : null}
+        </Fragment>
       ))}
     </>
   );
@@ -43,13 +46,12 @@ function Words({ text }: { text: string }) {
  *  - the chair's floor label by the podium (Martian Mono),
  *  - Josh's tag by his seat,
  *  - the oratory block (Fraunces, weight scrubbed 100 → 900 as the room turns),
- *  - two lines over the hall once the camera is behind Josh.
+ *  - three lines over the hall once the camera is behind Josh (won · the award · learned).
  */
 export function Speeches({ L, progress }: { L: Layout; progress: MotionValue<number> }) {
   const floorRef = useRef<HTMLDivElement>(null);
   const floorText = useRef<(HTMLSpanElement | null)[]>([]);
   const tagRef = useRef<HTMLDivElement>(null);
-  const blockRef = useRef<HTMLDivElement>(null);
   const labelRefs = useRef<(HTMLDivElement | null)[]>([]);
   const lineRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const topRefs = useRef<(HTMLParagraphElement | null)[]>([]);
@@ -61,8 +63,9 @@ export function Speeches({ L, progress }: { L: Layout; progress: MotionValue<num
     { label: COPY.speechLabels[2], text: COPY.speeches[2], a: B.waves[2][0] - 0.012, b: B.drop[0] + 0.014 },
   ];
   const tops = [
-    { text: COPY.won, a: B.won[0], b: B.won[1], italic: true },
-    { text: COPY.learned, a: B.learned[0], b: B.learned[1], italic: false },
+    { text: COPY.won, a: B.won[0], b: B.won[1], italic: true, wght: 380, k: 0.86, color: RISO.paper },
+    { text: COPY.award, a: B.award[0], b: B.award[1], italic: false, wght: 720, k: 1.06, color: RISO.sun },
+    { text: COPY.learned, a: B.learned[0], b: B.learned[1], italic: false, wght: 560, k: 1.06, color: RISO.paper },
   ];
 
   useProgress(progress, (p) => {
@@ -93,7 +96,8 @@ export function Speeches({ L, progress }: { L: Layout; progress: MotionValue<num
     if (floor) {
       floor.style.opacity = String(intro * plan);
       floor.style.visibility = intro * plan > 0 ? "visible" : "hidden";
-      const stage = p < B.waves[0][0] - 0.004 ? 0 : p < B.waves[2][1] - 0.004 ? 1 : 2;
+      // the chair hands Josh the floor only once the first heads actually turn
+      const stage = p < B.waves[0][0] + 0.012 ? 0 : p < B.waves[2][1] - 0.004 ? 1 : 2;
       floorText.current.forEach((t, i) => {
         if (t) t.style.display = i === stage ? "inline" : "none";
       });
@@ -152,7 +156,7 @@ export function Speeches({ L, progress }: { L: Layout; progress: MotionValue<num
       </div>
 
       {/* the oratory */}
-      <div ref={blockRef} className="absolute" style={blockStyle}>
+      <div className="absolute" style={blockStyle}>
         <div className="relative">
           {lines.map((ln, i) => (
             <div key={i} className={i === 0 ? "relative" : "absolute inset-x-0 bottom-0"} style={L.portrait && i > 0 ? { top: 0, bottom: "auto" } : undefined}>
@@ -199,12 +203,12 @@ export function Speeches({ L, progress }: { L: Layout; progress: MotionValue<num
             top: L.top.y,
             width: L.top.w,
             transform: "translateX(-50%)",
-            ...fraunces(i === 0 ? 380 : 560, 1, 0, 144),
+            ...fraunces(tp.wght, 1, 0, 144),
             fontStyle: tp.italic ? "italic" : "normal",
-            fontSize: L.top.fs * (i === 0 ? 0.86 : 1.06),
+            fontSize: L.top.fs * tp.k,
             lineHeight: 1.04,
             letterSpacing: "-0.02em",
-            color: RISO.paper,
+            color: tp.color,
             textShadow: `0 0.04em 0.5em ${alpha(RISO.cobalt, 0.9)}`,
             visibility: "hidden",
             textWrap: "balance",

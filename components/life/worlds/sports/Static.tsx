@@ -32,7 +32,8 @@ function StaticMedal({ side, r, label }: { side: "front" | "back"; r: number; la
       const ctx = c.getContext("2d");
       if (!ctx) return;
       const N = 24;
-      const a = 100;
+      // the live desktop rink's units, so the guilloche strokes keep their fine weight
+      const a = 320;
       const P: RosetteParams = { N, K: 4, spl: 340, a, b: 0.6 * a, psi: 0, theta0: Math.PI / 2, delta: 0.0125 };
       const eps = new Float32Array(N).fill(0.034);
       const R = a * (1 + 0.034 + 0.03) * (1 + 1.5 * 0.0125);

@@ -88,7 +88,8 @@ function Desktop({ W }: { W: number }) {
   const lampSize = H2 * 0.36;
 
   return (
-    <section aria-label="JEE, age 18: Projections" style={{ background: RISO.ink, color: RISO.paper }}>
+    <div style={{ background: RISO.ink, color: RISO.paper }}>
+      <h2 className="sr-only">JEE, age 18: Projections</h2>
       <Room
         W={W}
         H={H1}
@@ -131,7 +132,7 @@ function Desktop({ W }: { W: number }) {
         <BookPile cx={lapCx} base={floor2} width={W * 0.3} height={H2 * 0.25} columns={7} seed={8} />
         <LampSilhouette x={W - lampSize - W * 0.05} y={floor2 - lampSize * 0.94} size={lampSize} />
       </Room>
-    </section>
+    </div>
   );
 }
 
@@ -157,7 +158,8 @@ function Phone({ W }: { W: number }) {
   const lamp = W * 0.32;
 
   return (
-    <section aria-label="JEE, age 18: Projections" style={{ background: RISO.ink, color: RISO.paper }}>
+    <div style={{ background: RISO.ink, color: RISO.paper }}>
+      <h2 className="sr-only">JEE, age 18: Projections</h2>
       <Room
         W={W}
         H={H0}
@@ -208,6 +210,6 @@ function Phone({ W }: { W: number }) {
         <BookPile cx={W * 0.46} base={floor2} width={W * 0.72} height={H2 * 0.2} columns={4} seed={8} />
         <LampSilhouette x={W - lamp - 2} y={floor2 - lamp * 0.94} size={lamp} />
       </Room>
-    </section>
+    </div>
   );
 }

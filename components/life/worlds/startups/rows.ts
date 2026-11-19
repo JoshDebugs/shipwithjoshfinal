@@ -31,6 +31,8 @@ export type Row = {
   right?: string;
   /** Amount after the ₹ sign (drawn as a dot-matrix glyph), e.g. "70K". */
   money?: string;
+  /** Screen-reader text for a status that is only drawn (stamp, ribbon, tag). */
+  sr?: string;
 };
 
 export const ROWS: readonly Row[] = [
@@ -50,23 +52,23 @@ export const ROWS: readonly Row[] = [
   { id: "s-name", kind: "name", h: [44, 36], text: "STARSCALE" },
   { id: "s-desc", kind: "desc", h: [24, 21], text: "HIGH-END ANIMATED WEBSITES" },
   { id: "s-amt", kind: "amount", h: [32, 28], text: "3 CLIENTS", money: "70K" },
-  { id: "s-stamp", kind: "gap", h: [72, 60] },
+  { id: "s-stamp", kind: "gap", h: [80, 66], sr: "Shipped." },
   // ------------------------------------------------------------ Frags n Flavs
   { id: "r2", kind: "rule1", h: [16, 14] },
   { id: "f-no", kind: "itemno", h: [26, 22], text: "ITEM #002", right: "JAN–MAR 2026" },
   { id: "f-name", kind: "name", h: [44, 36], text: "FRAGS N FLAVS" },
   { id: "f-desc", kind: "desc", h: [24, 21], text: "PREMIUM INSTANT GIFTING" },
-  { id: "f-ribbon", kind: "gap", h: [48, 42] },
+  { id: "f-ribbon", kind: "gap", h: [48, 42], sr: "Gift receipt: price hidden." },
   { id: "f-amt", kind: "amount", h: [32, 28], text: "3 MONTHS", money: "42K" },
   { id: "f-note", kind: "note", h: [30, 26], text: "KIDDING:", money: "42K", right: "IN 3 MONTHS." },
-  { id: "f-stamp", kind: "gap", h: [78, 66] },
+  { id: "f-stamp", kind: "gap", h: [96, 82], sr: "Live + sold IRL." },
   // ----------------------------------------------------------------- LazyBull
   { id: "r3", kind: "rule1", h: [16, 14] },
   { id: "l-no", kind: "itemno", h: [26, 22], text: "ITEM #003", right: "2026" },
   { id: "l-name", kind: "name", h: [44, 36], text: "LAZYBULL" },
   { id: "l-desc", kind: "desc", h: [24, 21], text: "AI-SIMPLIFIED TRADING" },
   { id: "l-amt", kind: "amount", h: [32, 28], text: "BUILD TIME", right: "2 DAYS" },
-  { id: "l-tag", kind: "gap", h: [40, 96] },
+  { id: "l-tag", kind: "gap", h: [40, 96], sr: "For sale." },
   // ------------------------------------------------------------------- footer
   { id: "r4", kind: "rule2", h: [16, 14] },
   { id: "items", kind: "total", h: [28, 24], text: "ITEMS", right: "3" },
@@ -88,3 +90,14 @@ export const PRINTS = (k: RowKind) => k !== "gap";
 
 /** Row kinds set in Doto (their dots round off as they burn in). */
 export const DOTO = (k: RowKind) => k === "stars" || k === "head" || k === "name" || k === "note" || k === "thanks";
+
+/**
+ * Where each stamp lands on its row, shared by the live world and the static
+ * receipt: centre x (fraction of the receipt width), width (fraction, [desktop,
+ * phone]), centre y = row height / 2 + dy·u, and tilt. Sized so that at rest no
+ * edge touches the text above or the rule below.
+ */
+export const STAMP_LAND = {
+  s: { row: "s-stamp", x: 0.55, w: [0.5, 0.56], dy: 2, tilt: -6 },
+  f: { row: "f-stamp", x: 0.5, w: [0.48, 0.54], dy: 2, tilt: 4 },
+} as const;

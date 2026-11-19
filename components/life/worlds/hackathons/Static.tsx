@@ -58,8 +58,9 @@ export default function HackathonsStatic() {
   const lines = mobile ? ["HACKA", "THONS"] : ["HACK", "ATHONS"];
   const wdth = mobile ? 100 : 150;
   const fsMotto = mobile ? Math.min(inner / 4.3, 88) : Math.min(inner / 12.4, 104);
-  const heapLetters = "HACKATHONS".split("");
-  const fsHeap = mobile ? inner / 7.4 : Math.min(inner / 11, 118);
+  // a phone piles the heading in two courses (HACKA on THONS), a desktop in one
+  const heapRows = mobile ? ["HACKA", "THONS"] : ["HACKATHONS"];
+  const fsHeap = mobile ? Math.min(inner / 4.5, 96) : Math.min(inner / 11, 118);
   const heapTilt = [-14, 9, -32, 18, -7, 24, -19, 88, 11, -26];
   const heapLift = [0, 8, 2, 12, 0, 6, 3, 2, 10, 0];
   const mono: CSSProperties = { fontFamily: FONT.mono };
@@ -68,13 +69,13 @@ export default function HackathonsStatic() {
   return (
     <section aria-label="Hackathons, age 18" style={{ background: C.paper, color: C.ink }}>
       {/* v0.0.1: browser defaults, on purpose */}
-      <div className="relative overflow-hidden" style={{ background: RAW.page, color: RAW.text, fontFamily: RAW.serif, padding: `${mobile ? 100 : 112}px ${m}px ${mobile ? 28 : 34}px` }}>
-        <div className={mobile ? "" : "grid items-end"} style={{ gridTemplateColumns: mobile ? undefined : "minmax(0, 1.05fr) minmax(0, 1fr)", columnGap: 48, maxWidth: 1120, margin: mobile ? 0 : "0 auto" }}>
+      <div className="relative overflow-hidden" style={{ background: RAW.page, color: RAW.text, fontFamily: RAW.serif, padding: `${mobile ? 104 : 136}px ${m}px ${mobile ? 30 : 40}px` }}>
+        <div className={mobile ? "" : "grid items-start"} style={{ gridTemplateColumns: mobile ? undefined : "minmax(0, 1.05fr) minmax(0, 1fr)", columnGap: 48, maxWidth: 1120, margin: mobile ? 0 : "0 auto" }}>
           <div>
             <p style={{ fontSize: mobile ? 52 : 80, fontWeight: 700, lineHeight: 1.05, margin: 0 }}>Hackathons</p>
             <p style={{ fontSize: mobile ? 16 : 20, margin: "10px 0 0" }}>{COPY.rawLine}</p>
           </div>
-          <div style={{ marginTop: mobile ? 14 : 0 }}>
+          <div style={{ marginTop: mobile ? 14 : 10 }}>
             <ul style={{ fontSize: mobile ? 18 : 22, lineHeight: 1.32, margin: 0, paddingLeft: "1.4em", listStyle: "disc" }}>
               {EVENTS.map((e) => (
                 <li key={e.name} style={{ color: RAW.link, textDecoration: "underline", textUnderlineOffset: "0.08em" }}>
@@ -97,14 +98,28 @@ export default function HackathonsStatic() {
         </div>
       </div>
 
-      {/* three inks landing on the page: colors.css */}
-      <svg aria-hidden viewBox="0 0 1000 90" preserveAspectRatio="none" className="block w-full" style={{ height: mobile ? 36 : 60, isolation: "isolate" }}>
-        <rect width="1000" height="45" fill={RAW.page} />
-        <rect y="45" width="1000" height="45" fill={C.paper} />
-        <circle cx="210" cy="45" r="190" fill={C.pink} style={{ mixBlendMode: "multiply" }} />
-        <circle cx="470" cy="45" r="160" fill={C.sun} style={{ mixBlendMode: "multiply" }} />
-        <circle cx="760" cy="45" r="210" fill={C.cobalt} style={{ mixBlendMode: "multiply" }} />
-      </svg>
+      {/* the CSS installs itself: three paint floods bloom up out of the poster, three toasts */}
+      <div className="relative" style={{ height: mobile ? 64 : 84, background: RAW.page }}>
+        <svg aria-hidden viewBox="0 0 1000 84" preserveAspectRatio="none" className="absolute inset-0 block h-full w-full" style={{ isolation: "isolate" }}>
+          {[
+            { cx: 170, r: 64, ink: C.pink },
+            { cx: 500, r: 78, ink: C.sun },
+            { cx: 830, r: 58, ink: C.cobalt },
+          ].map((f) => (
+            <ellipse key={f.cx} cx={f.cx} cy={84} rx={f.r * 2.4} ry={f.r} fill={f.ink} style={{ mixBlendMode: "multiply" }} />
+          ))}
+          {/* the poster's paper edge: the floods rise out of it */}
+          <rect y="72" width="1000" height="12" fill={C.paper} />
+        </svg>
+        <div className="absolute inset-x-0 flex justify-center" style={{ top: mobile ? 10 : 14, gap: mobile ? 6 : 10, padding: `0 ${m}px` }}>
+          {["colors.css", "type.css", "motion.css"].map((t) => (
+            <span key={t} style={{ ...mono, fontSize: mobile ? 11 : 13.5, fontWeight: 600, background: C.ink, color: C.paper, padding: mobile ? "5px 8px" : "7px 14px", boxShadow: `3px 3px 0 ${C.sun}`, whiteSpace: "nowrap" }}>
+              <span style={{ color: C.sun, fontWeight: 800, marginRight: 6 }}>✓</span>
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* the poster */}
       <div className="relative overflow-hidden" style={{ padding: `${mobile ? 22 : 26}px ${m}px ${mobile ? 30 : 40}px` }}>
@@ -159,14 +174,14 @@ export default function HackathonsStatic() {
                 </div>
               </div>
             );
-            return <li key={e.name}>{i === 1 ? <Inspect depth={0} label={e.tag} style={{ height: "100%" }}>{card}</Inspect> : card}</li>;
+            return <li key={e.name} style={{ marginTop: mobile && i === 1 ? 18 : 0 }}>{i === 1 ? <Inspect depth={0} label={e.tag} style={{ height: "100%" }}>{card}</Inspect> : card}</li>;
           })}
         </ol>
       </div>
 
       {/* one frozen crash */}
       <div className="relative overflow-hidden" style={{ padding: `${mobile ? 8 : 16}px ${m}px 0` }}>
-        <div className={mobile ? "flex flex-col" : "grid"} style={{ gridTemplateColumns: mobile ? undefined : "minmax(0, 380px) minmax(0, 1fr)", gap: mobile ? 18 : 28, alignItems: "start" }}>
+        <div className={mobile ? "flex flex-col" : "grid"} style={{ gridTemplateColumns: mobile ? undefined : "minmax(0, 380px) minmax(0, 1fr)", gap: mobile ? 18 : 28, alignItems: mobile ? "stretch" : "start" }}>
           <div style={{ ...mono, background: C.ink, color: C.paper, fontSize: mobile ? 14 : 16, lineHeight: 1.7, padding: "14px 0", boxShadow: `8px 8px 0 ${C.pink}` }}>
             <div style={{ padding: "0 16px 8px", fontSize: 13, opacity: 0.7 }}>poster.css ● saved</div>
             <div style={{ padding: "0 16px" }}>
@@ -179,9 +194,9 @@ export default function HackathonsStatic() {
             <div style={{ padding: "0 16px" }}>{"}"}</div>
           </div>
           <div style={{ background: C.pink, color: C.paper, border: `4px solid ${C.ink}`, boxShadow: `10px 12px 0 ${C.ink}`, padding: mobile ? 16 : 26, transform: "rotate(-0.6deg)" }}>
-            <div className="flex items-center justify-between" style={{ ...mono, fontSize: mobile ? 11.5 : 14, fontWeight: 700, color: C.ink, marginBottom: 12 }}>
-              <span>✕ Runtime error · 1 of 1</span>
-              <span>hackathons/page.tsx</span>
+            <div className="flex flex-wrap items-center justify-between" style={{ ...mono, fontSize: mobile ? 10.5 : 14, fontWeight: 700, color: C.ink, marginBottom: 12, columnGap: 12, rowGap: 2 }}>
+              <span style={{ whiteSpace: "nowrap" }}>✕ Runtime error · 1 of 1</span>
+              <span style={{ whiteSpace: "nowrap" }}>hackathons/page.tsx</span>
             </div>
             <p style={{ ...anybody(mobile ? 75 : 88), fontSize: mobile ? 30 : 44, lineHeight: 1.04, margin: 0, textShadow: `3px 3px 0 ${C.ink}` }}>{COPY.error}</p>
             <p style={{ ...mono, fontWeight: 700, color: C.ink, fontSize: mobile ? 15.5 : 20, margin: "10px 0 0" }}>{COPY.errorWink}</p>
@@ -196,16 +211,26 @@ export default function HackathonsStatic() {
           </div>
         </div>
 
-        <div aria-hidden className="flex items-end justify-center" style={{ marginTop: mobile ? 26 : 34, paddingBottom: 4, borderBottom: `6px solid ${C.ink}` }}>
-          {heapLetters.map((ch, i) => (
-            <span
-              key={i}
-              className="inline-block"
-              style={{ ...anybody(mobile ? 92 : 128), fontSize: fsHeap, lineHeight: 0.8, marginBottom: heapLift[i], marginLeft: i ? -fsHeap * 0.06 : 0, transform: `rotate(${heapTilt[i]}deg)`, WebkitTextStroke: `${Math.max(3, fsHeap * 0.05)}px ${C.paper}`, paintOrder: "stroke fill", outline: `1.5px solid ${DEPTH[(i % 3) + 1]}`, outlineOffset: 2 }}
-            >
-              {ch}
-            </span>
-          ))}
+        <div aria-hidden style={{ marginTop: mobile ? 30 : 34, paddingBottom: 4, borderBottom: `6px solid ${C.ink}` }}>
+          {heapRows.map((row, r) => {
+            const first = heapRows.slice(0, r).join("").length;
+            return (
+              <div key={row} className="flex items-end justify-center" style={{ marginBottom: r < heapRows.length - 1 ? -fsHeap * 0.12 : 0, paddingLeft: r === 0 && mobile ? fsHeap * 0.3 : 0 }}>
+                {row.split("").map((ch, k) => {
+                  const i = first + k;
+                  return (
+                    <span
+                      key={i}
+                      className="inline-block"
+                      style={{ ...anybody(mobile ? 100 : 128), fontSize: fsHeap, lineHeight: 0.8, marginBottom: heapLift[i] * (mobile ? 0.6 : 1), marginLeft: k ? -fsHeap * (mobile ? 0.02 : 0.06) : 0, transform: `rotate(${heapTilt[i] * (mobile && Math.abs(heapTilt[i]) > 40 ? 0.25 : 1)}deg)`, WebkitTextStroke: `${Math.max(3, fsHeap * 0.05)}px ${C.paper}`, paintOrder: "stroke fill", outline: `1.5px solid ${DEPTH[(i % 3) + 1]}`, outlineOffset: 2 }}
+                    >
+                      {ch}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -217,9 +242,9 @@ export default function HackathonsStatic() {
           <span style={{ color: C.paper, opacity: 0.6, fontWeight: 400 }}> {COPY.gitComment}</span>
         </p>
         <p style={{ color: C.paper, fontSize: mobile ? 13 : 17, margin: "6px 0 0" }}>{COPY.gitOut}</p>
-        <p style={{ color: alpha(C.paper, 0.72), fontSize: mobile ? 12 : 14, lineHeight: 1.7, margin: "16px 0 0" }}>
+        <p className="flex flex-wrap" style={{ color: alpha(C.paper, 0.72), fontSize: mobile ? 12 : 14, lineHeight: 1.7, margin: "16px 0 0", columnGap: "1.6em" }}>
           {COMMITS.map(([h, msg]) => (
-            <span key={h} style={{ marginRight: "1.6em", whiteSpace: "nowrap" }}>
+            <span key={h} style={{ whiteSpace: "nowrap" }}>
               <span style={{ color: C.sun }}>{h}</span> {msg}
             </span>
           ))}
@@ -249,8 +274,8 @@ export default function HackathonsStatic() {
             </>
           )}
         </h3>
-        <p style={{ ...mono, fontWeight: 600, fontSize: mobile ? 13 : 20, margin: `${mobile ? 20 : 26}px 0 0` }}>
-          $ {COPY.git} <span style={{ opacity: 0.7 }}>{COPY.gitComment}</span>
+        <p style={{ ...mono, fontWeight: 600, fontSize: mobile ? 13 : 18, margin: `${mobile ? 20 : 26}px 0 0` }}>
+          {COPY.url} · nothing to commit, working tree clean
         </p>
         </div>
       </div>

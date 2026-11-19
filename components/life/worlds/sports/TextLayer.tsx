@@ -34,6 +34,9 @@ const W = {
 /** How far (% of its height) a line sits outside its slot: past the slot's descender allowance. */
 const SLOT = 145;
 
+/** Progress window over which the speed-stretch is released before the dive out. */
+const KIN_OFF = [0.93, 0.985] as const;
+
 const ODO_SEQ = ["01", "04", "09", "13", "17", "20", "25", "22", "24", "21", "25", "23"];
 
 /** A line that rises out of a slot. `kin` lines also get the speed-stretch. */
@@ -102,6 +105,14 @@ export function TextLayer({ progress, L }: { progress: MotionValue<number>; L: L
 
   useProgress(progress, (p) => {
     pRef.current = p;
+    // past the release point the kinetic lines are always at rest (see the ticker)
+    if (p >= KIN_OFF[1] && lastK.current !== 0) {
+      lastK.current = 0;
+      for (const { el, w0 } of kin.current) {
+        el.style.transform = "";
+        el.style.fontVariationSettings = `'wght' ${w0}`;
+      }
+    }
     // title card: stable at p = 0, lifts away as the comet leaves the line
     const tOut = range(p, BEAT.titleOut[0], BEAT.titleOut[1]);
     const title = titleRef.current;
@@ -165,15 +176,18 @@ export function TextLayer({ progress, L }: { progress: MotionValue<number>; L: L
     const p = pRef.current;
     if (p < 0.12) {
       if (chaseRef.current) chaseRef.current.style.backgroundPosition = `${100 - ((t * 22) % 200)}% 0`;
-      if (lap00Ref.current) lap00Ref.current.style.opacity = String(0.55 + 0.45 * (0.5 + 0.5 * Math.cos(t * 3.4)));
+      if (lap00Ref.current) lap00Ref.current.style.opacity = String(0.75 + 0.25 * (0.5 + 0.5 * Math.cos(t * 3.4)));
     }
     sv.current += (velocity.get() - sv.current) * (1 - Math.exp(-dt * 10));
-    const k = clamp(Math.abs(sv.current) / 40);
+    // the skating type settles upright before the dive (the ticker stops then, freezing whatever it last wrote)
+    const k = clamp(Math.abs(sv.current) / 40) * (1 - range(p, KIN_OFF[0], KIN_OFF[1]));
     if (Math.abs(k - lastK.current) < 0.004 && !(k === 0 && lastK.current !== 0)) return;
     lastK.current = k;
     const lean = -Math.sign(sv.current || 1) * k * 13;
+    // phones have little spare width: a gentler stretch keeps every line on screen
+    const sx = m ? 0.1 : 0.32;
     for (const { el, w0 } of kin.current) {
-      el.style.transform = k > 0.001 ? `skewX(${lean.toFixed(2)}deg) scaleX(${(1 + 0.32 * k).toFixed(3)})` : "";
+      el.style.transform = k > 0.001 ? `skewX(${lean.toFixed(2)}deg) scaleX(${(1 + sx * k).toFixed(3)})` : "";
       el.style.fontVariationSettings = `'wght' ${Math.round(w0 + (900 - w0) * k)}`;
     }
   });
@@ -343,10 +357,10 @@ export function TextLayer({ progress, L }: { progress: MotionValue<number>; L: L
 
       {/* ---------------- another direction */}
       <div ref={regBlock("exit")} style={colStyle(m ? Math.round(0.79 * h) : Math.round(0.745 * h), { visibility: "hidden", fontSize: m ? 25 : clamp(0.03 * w, 32, 50), lineHeight: 1.1, width: m ? colW : 0.5 * w })}>
-        <Line set={reg("exit", 0)} kin={regKin(700)} style={unb(700)}>
+        <Line set={reg("exit", 0)} kin={m ? undefined : regKin(700)} style={unb(700)}>
           {COPY.exit[0]}
         </Line>
-        <Line set={reg("exit", 1)} kin={regKin(700)} style={{ ...unb(700), color: RISO.pink }}>
+        <Line set={reg("exit", 1)} kin={m ? undefined : regKin(700)} style={{ ...unb(700), color: RISO.pink }}>
           {COPY.exit[1]}
         </Line>
       </div>

@@ -40,8 +40,14 @@ export type Geo = {
   /** Heat buffer resolution divisor (CSS px per texel). */
   fieldDiv: number;
   /** Heat-type blocks: headline (title card) and the pillar-word wall. */
-  headline: { w: number; cy: number; gap: number; lines: string[] };
-  wall: { w: number; cy: number; gap: number; maxH: number; sy: number };
+  /** Headline: `bottom` (when set) anchors the last baseline instead of centring on `cy`. */
+  headline: { w: number; cy: number; gap: number; lines: string[]; maxH: number; bottom?: number };
+  /**
+   * Wall: centred on `cy` inside `maxH`. Phones stack it between the scale labels
+   * and the lockout bar. The optional `split` sets rows before `after` above
+   * `y - gap/2` and the rest below `y + gap/2`, the upper half never rising above `top`.
+   */
+  wall: { w: number; cy: number; gap: number; maxH: number; sy: number; split?: { after: number; y: number; gap: number; top: number } };
 };
 
 export function computeGeo(W: number, H: number, lowPower: boolean): Geo {
@@ -62,7 +68,7 @@ export function computeGeo(W: number, H: number, lowPower: boolean): Geo {
   ];
 
   const frame = mobile
-    ? { l: 14, t: 74, r: W - 14, b: H - 96, arm: 22 }
+    ? { l: 14, t: 74, r: W - 14, b: H - 68, arm: 22 }
     : { l: 40, t: 100, r: W - 40, b: H - 92, arm: 30 };
 
   const scale = mobile
@@ -73,6 +79,32 @@ export function computeGeo(W: number, H: number, lowPower: boolean): Geo {
   const lampS = Math.round(fh * (mobile ? 0.44 : 0.42));
   const chestY = floorY - fh * 0.725;
   const lamp = { s: lampS, x: Math.round(cx - lampS * 0.55), y: Math.round(chestY - lampS * 0.5) };
+
+  // HUD and caption metrics shared with Hud.tsx
+  const small = (mobile ? 11.5 : 13.5) * u;
+  const hudTop = mobile ? 98 : 120;
+  const caption = mobile ? { x: 22, bottom: H - 88, w: W - 44 } : { x: 70, bottom: H - 112, w: Math.min(560, W * 0.4) };
+
+  // barbell heights (figure units): resting in the hang, locked out overhead
+  const BAR_HANG = 0.484;
+  const BAR_LOCK = 1.138;
+
+  // title card: narrower than the plates, its last line clear of the bar (and collars) at rest
+  const headW = Math.round(Math.min(W * 0.37, 548, fh * 0.9));
+  const headBottom = Math.round(floorY - fh * (BAR_HANG + 0.05) - barTh);
+  const headTop = 128;
+
+  // desktop wall: between the HUD's two lines and the tallest caption block
+  const wallTop = hudTop + small * 1.5 * 2 + 12;
+  const capBlock = small * 1.2 + 7 * u + 32 * u * 1.16 * 2;
+  const wallBottom = caption.bottom - capBlock - 10;
+
+  // phone wall: between the plates, stacked between the scale labels and the lockout bar
+  const lockBarY = floorY - fh * BAR_LOCK;
+  const plateInner = barHalf - fh * 0.117;
+  const scaleLabelsBottom = 142 + Math.max(4, Math.round(6 * u)) + 5 * u + small * 1.3;
+  const phoneWallTop = scaleLabelsBottom + 10;
+  const phoneWallBottom = lockBarY - barTh - fh * 0.04;
 
   return {
     W,
@@ -88,21 +120,32 @@ export function computeGeo(W: number, H: number, lowPower: boolean): Geo {
     k: fh * 0.03,
     edge: Math.max(1.2, fh * 0.004),
     frame,
-    hudTop: mobile ? 98 : 120,
+    hudTop,
     hudSide: mobile ? 22 : 70,
     scale,
-    caption: mobile
-      ? { x: 22, bottom: H - 88, w: W - 44 }
-      : { x: 70, bottom: H - 112, w: Math.min(560, W * 0.4) },
+    caption,
     lamp,
     hand: Math.round((mobile ? 92 : 118) * u),
     fieldDiv: mobile ? 2.5 : lowPower ? 4 : 3,
     headline: mobile
-      ? { w: Math.round(W * 0.8), cy: Math.round(H * 0.415), gap: Math.round(10 * u), lines: ["BUILT", "THE BODY", "TOO."] }
-      : { w: Math.round(Math.min(W * 0.37, 548)), cy: Math.round(H * 0.378), gap: Math.round(14 * u), lines: ["BUILT", "THE BODY", "TOO."] },
+      ? { w: Math.round(W * 0.8), cy: Math.round(H * 0.415), gap: Math.round(10 * u), lines: ["BUILT", "THE BODY", "TOO."], maxH: H * 0.6 }
+      : { w: headW, cy: Math.round((headTop + headBottom) / 2), gap: Math.round(14 * u), lines: ["BUILT", "THE BODY", "TOO."], maxH: Math.max(60, headBottom - headTop), bottom: headBottom },
     wall: mobile
-      ? { w: Math.round(W * 0.9), cy: Math.round(H * 0.34), gap: Math.round(10 * u), maxH: Math.round(H * 0.26), sy: 1.25 }
-      : { w: Math.round(Math.min(W * 0.8, 1180)), cy: Math.round(H * 0.475), gap: Math.round(22 * u), maxH: Math.round(H * 0.6), sy: 1 },
+      ? {
+          // all four rows stacked above the lockout bar: the raised arms and head never cover a letter
+          w: Math.round(Math.min(W * 0.9, 2 * plateInner - 12)),
+          cy: Math.round((phoneWallTop + phoneWallBottom) / 2),
+          gap: Math.round(5 * u),
+          maxH: Math.round(Math.max(48, phoneWallBottom - phoneWallTop)),
+          sy: 1,
+        }
+      : {
+          w: Math.round(Math.min(W * 0.74, 1180)),
+          cy: Math.round((wallTop + wallBottom) / 2),
+          gap: Math.round(22 * u),
+          maxH: Math.round(Math.max(120, wallBottom - wallTop)),
+          sy: 1,
+        },
   };
 }
 

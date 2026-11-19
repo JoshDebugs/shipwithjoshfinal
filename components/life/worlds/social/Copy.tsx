@@ -177,7 +177,8 @@ export const Copy = memo(function Copy({ L, reg, h }: { L: Layout; reg: LidRegis
       </div>
 
       {/* ------------------------------------------------------------ corner tag */}
-      <div className="absolute" style={{ left: mobile ? 14 : 24, top: mobile ? 14 : 22 }}>
+      {/* decorative copy of the title (the h2 already announces "Look at me.") */}
+      <div aria-hidden className="absolute" style={{ left: mobile ? 14 : 24, top: mobile ? 14 : 22 }}>
         <LidBox reg={reg} name="tag" win={SHOW.tag} lash={2}>
           <span
             className="block whitespace-nowrap"

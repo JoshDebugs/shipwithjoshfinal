@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 import type { MotionValue } from "framer-motion";
-import { useProgress } from "@/components/life/multiverse/runtime";
+import { useIsoLayoutEffect, useProgress } from "@/components/life/multiverse/runtime";
 import { RISO, alpha } from "@/components/life/multiverse/palette";
 import { easeInCubic, range } from "@/components/life/multiverse/ease";
 import { COPY } from "./copy";
@@ -58,7 +58,7 @@ export function TitleCard({ L, progress, dot }: { L: Layout; progress: MotionVal
     return () => window.clearTimeout(id);
   }, [L, fs, dot]);
 
-  useProgress(progress, (p) => {
+  const apply = (p: number) => {
     const root = rootRef.current;
     const word = wordRef.current;
     const sub = subRef.current;
@@ -69,7 +69,11 @@ export function TitleCard({ L, progress, dot }: { L: Layout; progress: MotionVal
     word.style.transform = `translate3d(0, ${-o * fs * 0.32}px, 0) scale(${1 - 0.06 * o})`;
     word.style.letterSpacing = `${-0.035 + o * 0.05}em`;
     sub.style.opacity = String(0.9 * (1 - range(p, B.titleOut[0] - 0.012, B.titleOut[0] + 0.02)));
-  });
+  };
+  useProgress(progress, apply);
+  // a resize changes the layout without moving progress: re-apply at once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useIsoLayoutEffect(() => apply(progress.get()), [L]);
 
   return (
     <div ref={rootRef} className="pointer-events-none absolute inset-0" style={{ zIndex: 5 }}>
@@ -87,7 +91,8 @@ export function TitleCard({ L, progress, dot }: { L: Layout; progress: MotionVal
           }}
         >
           {COPY.title}
-          <span className="relative inline-block" style={{ width: fs * 0.2, height: fs * 0.7 }}>
+          <span className="sr-only">.</span>
+          <span aria-hidden className="relative inline-block" style={{ width: fs * 0.2, height: fs * 0.7 }}>
             <span
               ref={dotRef}
               className="absolute rounded-full"

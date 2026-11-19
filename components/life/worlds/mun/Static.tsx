@@ -12,7 +12,7 @@ import { hash } from "@/components/life/multiverse/ease";
 import { COPY, PAPER, PAPER_SUMMARY } from "./copy";
 import { HALL, buildHall } from "./hall";
 import { archivo, fraunces, martian } from "./ink";
-import { BURST, ConferenceStamp, Seal } from "./Seal";
+import { BURST, ConferenceStamp, SEAL_AT, Seal } from "./Seal";
 import { GavelGlyph } from "./TitleCard";
 
 const DEEP = overprint(RISO.cobalt, RISO.cobalt);
@@ -191,17 +191,25 @@ export default function MunStatic() {
   const weights = [100, 300, 600, 900];
   const lines = [COPY.opening, ...COPY.speeches];
   const labels = [COPY.openingLabel, ...COPY.speechLabels];
+  // the chair's floor calls, above the lines they cue
+  const chair: ({ text: string; dot: string } | null)[] = [
+    { text: COPY.floorOpp, dot: RISO.pink },
+    { text: COPY.floorJosh, dot: RISO.sun },
+    null,
+    null,
+  ];
   const cw = mobile ? 300 : 420;
   const ch = (cw * 0.3) / 0.9;
 
   return (
     <div data-mun-static className="relative overflow-hidden" style={{ background: RISO.cobalt, color: RISO.paper }}>
-      <div className="mx-auto flex max-w-[1240px] flex-col gap-16 px-5 pb-24 pt-28 md:gap-24 md:px-12 md:pt-36">
+      <div className="mx-auto flex max-w-[1240px] flex-col gap-16 px-5 pb-20 pt-28 md:gap-20 md:px-12 md:pt-32">
         {/* ORDER. */}
         <header className="flex flex-col items-center text-center">
           <h2 className="relative whitespace-nowrap" style={{ ...fraunces(900, 1, 0, 144), fontSize: titleFs, lineHeight: 0.82, letterSpacing: "-0.035em" }}>
             {COPY.title}
-            <span className="relative inline-block" style={{ width: titleFs * 0.2, height: titleFs * 0.7 }}>
+            <span className="sr-only">.</span>
+            <span aria-hidden className="relative inline-block" style={{ width: titleFs * 0.2, height: titleFs * 0.7 }}>
               <span className="absolute rounded-full" style={{ left: titleFs * 0.03, bottom: 0, width: titleFs * 0.15, height: titleFs * 0.15, background: RISO.sun }} />
               <GavelGlyph
                 color={RISO.paper}
@@ -223,7 +231,7 @@ export default function MunStatic() {
         </header>
 
         {/* the case file, and the room it was argued in */}
-        <section className="grid items-center gap-14 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-16">
+        <section className="grid items-center gap-14 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
           <StaticPaper fs={mobile ? 12.5 : 16} />
           <div>
             <TurnedRoom mobile={mobile} />
@@ -234,53 +242,64 @@ export default function MunStatic() {
           </div>
         </section>
 
-        {/* the oratory gains weight as the room turns */}
-        <section className="flex flex-col gap-8 md:gap-10">
-          {lines.map((t, i) => (
-            <div key={i}>
-              <p className="mb-3 flex items-center gap-3" style={{ ...martian, fontSize: mobile ? 10 : 11.5, color: RISO.sun }}>
-                <span className="inline-block" style={{ width: 9, height: 9, background: RISO.sun }} />
-                {labels[i]}
-              </p>
-              <p style={{ ...fraunces(weights[i], i === 3 ? 1 : 0, i === 0 ? 100 : 0, 144), fontSize: speechFs, lineHeight: 1.04, letterSpacing: "-0.02em" }}>{t}</p>
-            </div>
-          ))}
-          <p style={{ ...fraunces(380, 1, 0, 144), fontStyle: "italic", fontSize: speechFs * 0.8, lineHeight: 1.1 }}>{COPY.won}</p>
-        </section>
-
-        {/* the record */}
-        <section className="flex flex-col items-center gap-14">
-          <div className="relative" style={{ width: cw, height: ch, marginBottom: ch * 1.35 }}>
-            <div
-              className="absolute inset-0 flex flex-col justify-between"
-              style={{ background: RISO.sun, color: RISO.ink, padding: `${ch * 0.11}px ${cw * 0.06}px ${ch * 0.12}px`, boxShadow: `0 ${ch * 0.07}px 0 ${alpha(RISO.ink, 0.35)}` }}
-            >
-              <div style={{ ...martian, fontSize: Math.round(ch * 0.085), letterSpacing: "0.22em" }}>Delegate</div>
-              <div style={{ ...archivo(125, 900), fontSize: ch * 0.5, lineHeight: 0.86 }}>JOSH</div>
-              <div className="flex items-center gap-[0.8em]" style={{ ...martian, fontSize: Math.round(ch * 0.075), letterSpacing: "0.22em" }}>
-                <span style={{ width: cw * 0.1, height: Math.max(2, ch * 0.022), background: RISO.ink, display: "inline-block" }} />
-                Age 15
-              </div>
-            </div>
-            <div className="absolute" style={{ left: cw * 0.79, top: ch * 0.5, transform: "translate(-50%, -50%) rotate(-9deg)", mixBlendMode: "multiply" }}>
-              <Seal size={ch * 1.22} id="mun-seal-static" />
-            </div>
-            {BURST.map((b, i, arr) => (
-              <div
-                key={i}
-                aria-hidden={i < arr.length - 1}
-                className="absolute"
-                style={{ left: cw * b.x, top: ch * b.y, opacity: b.o, transform: `translate(-50%, -50%) rotate(${b.r}deg)`, mixBlendMode: b.multiply ? "multiply" : "normal" }}
-              >
-                <ConferenceStamp fs={(mobile ? 16 : 23) * (i === arr.length - 1 ? 1.08 : 1)} shift={i + 2} />
+        {/* the oratory gains weight as the room turns; beside it, the record it won */}
+        <section className="grid items-center gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+          <div className="flex flex-col gap-8 md:gap-10">
+            {lines.map((t, i) => (
+              <div key={i}>
+                {chair[i] && (
+                  <p className="mb-5 flex items-center gap-3" style={{ ...martian, fontSize: mobile ? 9.5 : 11, color: RISO.paper }}>
+                    <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: chair[i]!.dot }} />
+                    {chair[i]!.text}
+                  </p>
+                )}
+                <p className="mb-3 flex items-center gap-3" style={{ ...martian, fontSize: mobile ? 10 : 11.5, color: RISO.sun }}>
+                  <span className="inline-block" style={{ width: 9, height: 9, background: RISO.sun }} />
+                  {labels[i]}
+                </p>
+                <p style={{ ...fraunces(weights[i], i === 3 ? 1 : 0, i === 0 ? 100 : 0, 144), fontSize: speechFs, lineHeight: 1.04, letterSpacing: "-0.02em" }}>{t}</p>
               </div>
             ))}
+            <p style={{ ...fraunces(380, 1, 0, 144), fontStyle: "italic", fontSize: speechFs * 0.8, lineHeight: 1.1 }}>{COPY.won}</p>
           </div>
-          <p className="sr-only">{COPY.award}</p>
-          <p className="max-w-[16ch] text-center md:max-w-none" style={{ ...fraunces(560, 1, 0, 144), fontSize: mobile ? 40 : 64, lineHeight: 1.04, letterSpacing: "-0.02em" }}>
-            {COPY.learned}
-          </p>
+
+          {/* the record */}
+          <div className="flex flex-col items-center gap-10">
+            <div className="relative" style={{ width: cw, height: ch, marginTop: ch * 0.5, marginBottom: ch * 1.35, isolation: "isolate" }}>
+              <div
+                className="absolute inset-0 flex flex-col justify-between"
+                style={{ background: RISO.sun, color: RISO.ink, padding: `${ch * 0.11}px ${cw * 0.06}px ${ch * 0.12}px`, boxShadow: `0 ${ch * 0.07}px 0 ${alpha(RISO.ink, 0.35)}` }}
+              >
+                <div style={{ ...martian, fontSize: Math.round(ch * 0.085), letterSpacing: "0.22em" }}>{COPY.awardLabel}</div>
+                <div style={{ ...archivo(125, 900), fontSize: ch * 0.5, lineHeight: 0.86 }}>JOSH</div>
+                <div className="flex items-center gap-[0.8em]" style={{ ...martian, fontSize: Math.round(ch * 0.075), letterSpacing: "0.22em" }}>
+                  <span style={{ width: cw * 0.1, height: Math.max(2, ch * 0.022), background: RISO.ink, display: "inline-block" }} />
+                  Age 15
+                </div>
+              </div>
+              <div className="absolute" style={{ left: cw * SEAL_AT.x, top: ch * SEAL_AT.y, transform: "translate(-50%, -50%) rotate(-9deg)", mixBlendMode: "multiply" }}>
+                <Seal size={ch * 1.22} id="mun-seal-static" />
+              </div>
+              {BURST.map((b, i, arr) => (
+                <div
+                  key={i}
+                  aria-hidden
+                  className="absolute"
+                  style={{ left: cw * b.x, top: ch * b.y, opacity: b.o, transform: `translate(-50%, -50%) rotate(${b.r}deg)`, mixBlendMode: b.multiply ? "multiply" : "normal" }}
+                >
+                  <ConferenceStamp fs={(mobile ? 16 : 23) * (i === arr.length - 1 ? 1.08 : 1)} shift={i + 2} />
+                </div>
+              ))}
+            </div>
+            <p className="max-w-[18ch] text-center" style={{ ...fraunces(720, 1, 0, 144), fontSize: mobile ? 30 : 40, lineHeight: 1.06, letterSpacing: "-0.02em", color: RISO.sun }}>
+              {COPY.award}
+            </p>
+          </div>
         </section>
+
+        <p className="mx-auto max-w-[16ch] text-center md:max-w-none" style={{ ...fraunces(560, 1, 0, 144), fontSize: mobile ? 40 : 64, lineHeight: 1.04, letterSpacing: "-0.02em" }}>
+          {COPY.learned}
+        </p>
       </div>
     </div>
   );

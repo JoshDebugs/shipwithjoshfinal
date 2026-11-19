@@ -1,5 +1,7 @@
 /** DOM layout boxes (px) derived from the stage size — captions, LCD, ticker. */
 
+import { stacked } from "./rig";
+
 export type Box = { x: number; y: number; w: number; h: number };
 
 export type Frame = {
@@ -15,7 +17,7 @@ export type Frame = {
 };
 
 export function frame(w: number, h: number): Frame {
-  const mobile = w < 768;
+  const mobile = stacked(w, h);
   if (mobile) {
     const top = Math.round(h * 0.7);
     return {
@@ -30,7 +32,8 @@ export function frame(w: number, h: number): Frame {
   return {
     mobile,
     captions: { x: Math.round(w * 0.045), y: Math.round(h * 0.2), w: colW, h: Math.round(h * 0.66) },
-    lcd: { x: 28, y: 28, scale: 1 },
+    // narrower landscape stages: keep the timer clear of the site's centred nav pill
+    lcd: { x: 28, y: 28, scale: w < 1024 ? 0.75 : 1 },
     ticker: { x: Math.round(w * 0.045), y: h - 70, w: Math.min(560, w * 0.42), h: 34 },
     knockout: { x: -120, y: -120, w: 120 + Math.round(w * 0.045) + colW + 70, h: h + 240 },
   };

@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { projects } from "@/lib/projects";
-import { ScrollReveal } from "@/components/ScrollReveal";
-import { CaseStudyBody } from "@/components/CaseStudyBody";
+import { projects } from "@/lib/data/projects";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { CaseStudyBody } from "@/components/case-study/CaseStudyBody";
 
 /**
- * Standalone case-study route.
- *
- * Reached by direct URL, refresh on `/work/[slug]`, or share links. When
- * navigated to from the home page (`/`), the @modal parallel-route slot
- * intercepts and renders ProjectModal instead — see
- * `app/@modal/(.)work/[slug]/page.tsx`.
- *
- * Body content is shared with the modal via `<CaseStudyBody>` so a single
- * edit to the case study shows up in both surfaces.
+ * Case-study route, reached from the home page's project rows, the
+ * next-project chain, or a shared link. The story itself lives in
+ * `<CaseStudyBody>`; this route adds the header and footer chrome.
  */
 
 type RouteParams = { slug: string };

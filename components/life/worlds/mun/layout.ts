@@ -44,11 +44,12 @@ export type Layout = {
   cardW: number;
   /** foreground exaggeration of the card once we're behind Josh (wide-angle near object) */
   cardBoost: number;
-  seal: number;
 };
 
 export function buildLayout(w: number, h: number, mobile: boolean, lowPower: boolean): Layout {
   const portrait = h > w * 1.12;
+  /** portrait but not phone-width (tablets): the over-the-shoulder lens is pulled wider */
+  const tablet = portrait && w >= 600;
 
   // ---- the position paper (DOM sheet)
   const paperW = portrait ? Math.min(w - 36, 420) : Math.min(h - 190, 700) * 0.72;
@@ -74,7 +75,9 @@ export function buildLayout(w: number, h: number, mobile: boolean, lowPower: boo
   const cam = {} as Cam;
   const pr = newProj();
   const endTheta = (portrait ? 34 : 30) * DEG;
-  const endF = portrait ? w * 1.36 : h * 0.9;
+  // on tablets the phone lens (w·1.36) is so long that the back rows and the chair's dais climb under
+  // the site nav; a wider lens drops the farthest row to ~30% down, leaving clear cobalt for L.top
+  const endF = tablet ? w * 0.9 : portrait ? w * 1.36 : h * 0.9;
   const eye = { x: 0, y: portrait ? 5.6 : 5.2, z: geo.josh.z - (portrait ? 3.6 : 4.4) };
   setCam(cam, eye.x, eye.y, eye.z, endTheta, 0, endF, w / 2, 0);
   project(cam, geo.card.x, geo.card.y, geo.card.z, pr);
@@ -118,7 +121,6 @@ export function buildLayout(w: number, h: number, mobile: boolean, lowPower: boo
     title: { fs: portrait ? (w - 40) / 3.95 : Math.min(w * 0.17, h * 0.36) },
     cardW: portrait ? 300 : 420,
     cardBoost: portrait ? 2.5 : 2.4,
-    seal: 0,
   };
 }
 

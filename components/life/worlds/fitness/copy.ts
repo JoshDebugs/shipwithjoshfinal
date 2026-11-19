@@ -24,7 +24,8 @@ export const CAPTIONS: readonly Caption[] = [
     (s): Caption => ({
       tag: `SET ${s.n} · ${s.word}`,
       line: `${sentence(s.line)}`,
-      at: [s.a + 0.012, s.a + 0.03, s.b - 0.024, s.b - 0.006],
+      // set 04 holds until the lockout so the third "Again." lands
+      at: s.n === "04" ? [s.a + 0.012, s.a + 0.03, s.b - 0.008, s.b + 0.008] : [s.a + 0.012, s.a + 0.03, s.b - 0.024, s.b - 0.006],
     }),
   ),
   { tag: "LOCKOUT", line: LOCKOUT, at: [0.852, 0.872, 0.93, 0.95] },

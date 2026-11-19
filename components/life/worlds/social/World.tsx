@@ -50,6 +50,9 @@ export default function SocialWorld({ progress }: WorldProps) {
   const h = useMemo(() => emptyHandles(), []);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  /** the post card stands in for the site cursor only while it is visible (fine pointers) */
+  const cursorHidden = useRef(false);
+  const finePointer = useRef(false);
   const postRef = useRef<HTMLDivElement>(null);
   const pRef = useRef(progress.get());
   const lastViews = useRef("");
@@ -106,10 +109,27 @@ export default function SocialWorld({ progress }: WorldProps) {
     (p: number) => {
       const f = sim.frame;
       const s = sizes(L);
-
-      // views counter: digits, label, attention-inflated axes, the slam to centre
       const num = h.viewsNum;
       const wrap = h.viewsWrap;
+
+      // READS FIRST (layout from the last write, at most a frame old) so the
+      // writes below never force a synchronous reflow on a scroll frame.
+      // The eyes make room for the counter's and the headline's real sizes.
+      if (wrap && f.clearB > 0) {
+        const w = wrap.offsetWidth;
+        const hh = wrap.offsetHeight;
+        const x0 = L.mobile ? L.pad : L.W - L.pad - w;
+        sim.field.clearB = [x0 - 8, s.viewsTop - 6, x0 + w + 8, s.viewsTop + hh + 6];
+      }
+      const hb = h.headBlock;
+      if (hb && f.clearA > 0) {
+        let w = h.kicker?.offsetWidth ?? 0;
+        for (const ln of h.headLines) if (ln) w = Math.max(w, ln.offsetWidth);
+        const x0 = hb.offsetLeft;
+        sim.field.clearA = [x0 - 8, hb.offsetTop - 6, x0 + w + 10, hb.offsetTop + hb.offsetHeight + 6];
+      }
+
+      // views counter: digits, label, attention-inflated axes, the slam to centre
       if (num && wrap) {
         const str = formatViews(f.views);
         if (str !== lastViews.current) {
@@ -128,28 +148,16 @@ export default function SocialWorld({ progress }: WorldProps) {
         const ax = lerp(hax, -50, k);
         const ay = lerp(0, -50, k);
         wrap.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(${ax.toFixed(2)}%, ${ay.toFixed(2)}%) scale(${sc.toFixed(4)})`;
-        if (f.clearB > 0) {
-          const w = wrap.offsetWidth;
-          const hh = wrap.offsetHeight;
-          const x0 = L.mobile ? L.pad : L.W - L.pad - w;
-          sim.field.clearB = [x0 - 8, s.viewsTop - 6, x0 + w + 8, s.viewsTop + hh + 6];
-        }
       }
 
-      // the headline swells with attention; the eyes make room for its real width
+      // the headline swells with attention
       if (h.headline) h.headline.style.fontVariationSettings = axes(80 + 24 * f.attention, 380 + 470 * f.attention);
-      const hb = h.headBlock;
-      if (hb && f.clearA > 0) {
-        let w = h.kicker?.offsetWidth ?? 0;
-        for (const ln of h.headLines) if (ln) w = Math.max(w, ln.offsetWidth);
-        const x0 = hb.offsetLeft;
-        sim.field.clearA = [x0 - 8, hb.offsetTop - 6, x0 + w + 10, hb.offsetTop + hb.offsetHeight + 6];
-      }
 
       // the next portal's silhouette fills in as the followers arrive
       if (h.gavel) {
         const g = backOut(range(p, 0.9, 0.962), 1.5);
-        h.gavel.style.transform = `scale(${g.toFixed(4)})`;
+        // drawn at the portal's birth angle (portalFrame starts at -6deg about the anchor)
+        h.gavel.style.transform = `scale(${g.toFixed(4)}) rotate(-6deg)`;
         h.gavel.style.visibility = g <= 0.001 ? "hidden" : "visible";
       }
     },
@@ -179,11 +187,32 @@ export default function SocialWorld({ progress }: WorldProps) {
   }, [measure, paint]);
 
   useEffect(() => {
+    const mq = window.matchMedia?.("(pointer: fine)");
+    if (!mq) return;
+    const on = () => {
+      finePointer.current = mq.matches;
+    };
+    on();
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
+
+  useEffect(() => {
+    if (active || !cursorHidden.current) return;
+    // the ticker may already be stopped: give the site cursor back here too
+    cursorHidden.current = false;
+    rootRef.current?.removeAttribute("data-site-cursor");
+  }, [active]);
+
+  useEffect(() => {
     if (!active) return;
     look.current.slow = true;
-    const id = window.setTimeout(measure, 60);
+    const id = window.setTimeout(() => {
+      measure();
+      paint(pRef.current);
+    }, 60);
     return () => window.clearTimeout(id);
-  }, [active, measure]);
+  }, [active, measure, paint]);
 
   useProgress(progress, (p) => {
     pRef.current = p;
@@ -253,6 +282,12 @@ export default function SocialWorld({ progress }: WorldProps) {
     if (el) {
       const F = sim.field;
       const vis = bell(p, 0.118, 0.15, 0.875, 0.915);
+      const want = active && finePointer.current && vis > 0.05;
+      if (want !== cursorHidden.current && rootRef.current) {
+        cursorHidden.current = want;
+        if (want) rootRef.current.setAttribute("data-site-cursor", "hide");
+        else rootRef.current.removeAttribute("data-site-cursor");
+      }
       const vx = (F.postX - lk.lastX) / Math.max(dt, 1 / 240);
       lk.lastX = F.postX;
       lk.tilt += (clamp(vx * 0.012, -14, 14) - lk.tilt) * (1 - Math.exp(-dt * 10));
@@ -275,7 +310,6 @@ export default function SocialWorld({ progress }: WorldProps) {
       ref={rootRef}
       className="absolute inset-0 overflow-hidden"
       style={{ background: RISO.pink }}
-      data-site-cursor="hide"
       onPointerDown={onPointerDown}
     >
       <GavelMark L={L} h={h} originRef={origin} />

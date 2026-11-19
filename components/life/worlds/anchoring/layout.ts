@@ -4,6 +4,8 @@
  * Desktop: a print poster. The knob is centre-stage on the title card, then
  * docks into a console at bottom-left (knob + meter bridge + print slug),
  * speaker cones stand cropped at the right edge, the type lives centre.
+ * Portrait tablet: the desktop poster, but MIC / ON. is sized by the width
+ * and the (smaller) cones stand above and below the band, never beside type.
  * Phone: the console docks at the top (no site nav there), the cones become
  * stage monitors peeking from the bottom corners, rows break short and loud.
  */
@@ -52,7 +54,20 @@ export const CAP = 0.715;
 /** Stage-width fraction of the two loudest desktop lines. */
 const LOUD_FIT = 0.74;
 
-export function computeLayout(W: number, H: number, mobile: boolean): Layout {
+/**
+ * Halftone cell sizes from a dot budget (§3.11): the four screens together
+ * print about `target` dots, whatever the stage size. `base` are the screens'
+ * relative rulings; `minK` keeps small stages from going finer than designed.
+ */
+function budgetCells(W: number, H: number, base: readonly number[], target: number, minK: number): [number, number, number, number] {
+  const pad = 2 * base[0];
+  const area = (W + pad) * (H + pad);
+  const inv = base.reduce((a, b) => a + 1 / (b * b), 0);
+  const k = Math.max(minK, Math.sqrt((area * inv) / target));
+  return [base[0] * k, base[1] * k, base[2] * k, base[3] * k];
+}
+
+export function computeLayout(W: number, H: number, mobile: boolean, lowPower = false): Layout {
   const K = 300;
   if (mobile) {
     const sc = clamp(W / 390, 0.82, 1.15);
@@ -96,35 +111,51 @@ export function computeLayout(W: number, H: number, mobile: boolean): Layout {
       skate: { S, x: W / 2 - 0.535 * S, y: lineExit - 0.96 * S },
       type: { whisper: 34 * sc, tap: 24 * sc, opener: 28 * sc, openerLead: 34 * sc, welcome: 30 * sc, welcomeLead: 36 * sc, age: 13, mono: 9 },
       fit: { grade6: 0.8, grade7: 0.86, inside: 0.88, max: 0.24 * W },
-      ys: { grade6: 0.33 * H, grade7: 0.33 * H, inside: 0.34 * H, age: rails[3] + 40 },
+      // grade 6 sits a little lower than the others so its two rows clear the docked console
+      ys: { grade6: 0.365 * H, grade7: 0.33 * H, inside: 0.34 * H, age: rails[3] + 40 },
       loudDx: 0,
       openerGap: 20 * sc,
       welcomeGap: 40 * sc,
       rows: ROWS.mobile,
-      cells: [36, 40, 44, 30],
+      cells: budgetCells(W, H, [36, 40, 44, 30], 750, 1),
       marks: { inset: 18 },
     };
   }
 
   const sc = clamp(Math.min(W / 1440, H / 900), 0.6, 1.3);
-  const rowH = 0.185 * H;
+  // portrait tablets: the landscape geometry is height-driven and runs off the sides
+  const portrait = W / H < 0.85;
+  const coneR = Math.min(0.27 * H, 0.2 * W);
+  const coneX = W + 0.12 * coneR;
+  // MIC at wdth 150 is ~2.83 em (~5.34 rowH) wide: cap the band by the width so it fits the sheet unsqueezed;
+  // landscape also caps it by the free half-width left of the cones (4:3 tablets ran the C into the upper cone)
+  const rowH = portrait ? Math.min(0.185 * H, 0.155 * W) : Math.min(0.185 * H, (coneX - coneR - W / 2 - 16) / 2.67);
   const waveH = 0.105 * H;
   const bandC = 0.43 * H;
   const top = bandC - (2 * rowH + waveH) / 2;
   const rails: [number, number, number, number] = [top, top + rowH, top + rowH + waveH, top + 2 * rowH + waveH];
   const knobTitleS = clamp(H / 900, 0.62, 1.15);
+  // exit knob: smaller on short stages, and its dial (numerals reach ~0.49 K above centre) floored under the site tagline
+  const exitS = knobTitleS * (0.76 + 0.1 * clamp((H - 720) / 180, 0, 1));
+  const exitY = Math.max(0.29 * H, 128 + 0.49 * K * exitS);
   const titleY = 0.385 * H;
   const lineTitle = 0.68 * H;
-  const lineExit = 0.7 * H;
   const S = Math.round(clamp(0.2 * H, 130, 230));
-  const coneR = 0.27 * H;
   const consoleS = clamp(0.62 * sc, 0.5, 0.75);
   const consoleX = 40 + (K / 2) * consoleS;
   const consoleY = H - 52 - (K / 2) * consoleS;
-  const cell = clamp(sc, 0.85, 1.25);
   const vuX = consoleX + (K / 2) * consoleS + 30;
   const segW = Math.round(24 * sc);
   const gap = Math.round(5 * sc);
+  // the panel holds the VU *and* the slug, whose longest reading ("VOL 11.0 · +3 DB CLIP") is ~290px at 10px mono
+  const panelW = Math.max(12 * segW + 11 * gap + 28, 330);
+  const panelTop = consoleY - 27;
+  // keep "Please welcome our next act…" (gap + descenders + wave) clear of the panel on short stages
+  const lineExit = Math.min(0.7 * H, panelTop - 62 * sc - 34 * sc - 8);
+  // portrait: cones stand above and below the band, clear of every line of type
+  const coneYs = portrait ? [Math.max(rails[0] - coneR - 14, 0.06 * H), Math.min(rails[3] + coneR + 14, H - 0.2 * coneR)] : [0.24 * H, 0.77 * H];
+  // landscape: nudge the loudest lines left of the cones, but never off the sheet's left edge
+  const loudDx = portrait ? 0 : Math.max(24 - (W / 2 - (LOUD_FIT * W) / 2), Math.min(0, coneX - coneR - 26 - (W / 2 + (LOUD_FIT * W) / 2)));
   return {
     W,
     H,
@@ -133,7 +164,7 @@ export function computeLayout(W: number, H: number, mobile: boolean): Layout {
     knob: {
       title: { x: W / 2, y: titleY, s: knobTitleS },
       console: { x: consoleX, y: consoleY, s: consoleS },
-      exit: { x: W / 2, y: 0.29 * H, s: knobTitleS * 0.86 },
+      exit: { x: W / 2, y: exitY, s: exitS },
     },
     labelY: titleY - (K / 2) * knobTitleS - 26,
     whisperY: lineTitle + 0.075 * H,
@@ -142,13 +173,14 @@ export function computeLayout(W: number, H: number, mobile: boolean): Layout {
     mic: { h: 74 * sc, hClip: waveH * 0.86, exitX: 0.715 * W },
     amp: { max: 0.085 * H, hum: 0.026 * H, rest: 1.2 },
     waveK: (Math.PI * 2) / (W * 0.36),
-    vu: { x: vuX, y: consoleY - 14, segW, segH: Math.round(13 * sc), gap, labelEvery: 1 },
+    // narrow segments: label every third (−∞ −24 −9 0 CLIP) so "+3" never runs into "CLIP"
+    vu: { x: vuX, y: consoleY - 14, segW, segH: Math.round(13 * sc), gap, labelEvery: segW < 18 ? 3 : 1 },
     slug: { x: vuX, y: consoleY + 34, titleX: W / 2 },
-    panel: { x: vuX - 14, y: consoleY - 14 - 13, w: 12 * segW + 11 * gap + 28, h: 34 + 10 + 14 + 14 + 13 },
+    panel: { x: vuX - 14, y: panelTop, w: panelW, h: 34 + 10 + 14 + 14 + 13 },
     band: { rails, rowH, waveH, font: (1.35 * rowH) / CAP, maxTextW: 0.86 * W },
     cones: [
-      { x: W + 0.12 * coneR, y: 0.24 * H, r: coneR, dx: coneR * 1.15, dy: 0 },
-      { x: W + 0.12 * coneR, y: 0.77 * H, r: coneR, dx: coneR * 1.15, dy: 0 },
+      { x: coneX, y: coneYs[0], r: coneR, dx: coneR * 1.15, dy: 0 },
+      { x: coneX, y: coneYs[1], r: coneR, dx: coneR * 1.15, dy: 0 },
     ],
     skate: { S, x: W / 2 - 0.535 * S, y: lineExit - 0.96 * S },
     type: {
@@ -163,11 +195,11 @@ export function computeLayout(W: number, H: number, mobile: boolean): Layout {
     },
     fit: { grade6: 0.6, grade7: LOUD_FIT, inside: LOUD_FIT, max: 0.2 * H },
     ys: { grade6: 0.33 * H, grade7: 0.34 * H, inside: 0.34 * H, age: rails[3] + 46 * sc },
-    loudDx: Math.min(0, W + 0.12 * coneR - coneR - 26 - (W / 2 + (LOUD_FIT * W) / 2)),
+    loudDx,
     openerGap: 26 * sc,
     welcomeGap: 62 * sc,
     rows: ROWS.desktop,
-    cells: [36 * cell, 40 * cell, 44 * cell, 32 * cell],
+    cells: budgetCells(W, H, [36, 40, 44, 32], lowPower ? 1800 : 3000, 0.85),
     marks: { inset: 26 },
   };
 }

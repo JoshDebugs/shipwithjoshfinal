@@ -25,7 +25,7 @@ function Sticker({ id, size, cap }: { id: number; size: number; cap: number }) {
   const n = 6;
   const fs = T * TYPE_SIZE;
   return (
-    <svg viewBox={`0 0 ${T} ${T}`} width={size} height={size} className="absolute inset-0" aria-hidden={pr.text.trim() === ""}>
+    <svg viewBox={`0 0 ${T} ${T}`} width={size} height={size} className="absolute inset-0" aria-hidden>
       <rect width={T} height={T} fill={pr.ink.bg} />
       <g stroke={patternInk(pr.ink)} strokeWidth={T / 220 < 0.45 ? 0.45 : T / 220}>
         {Array.from({ length: n - 1 }, (_, i) => {
@@ -66,8 +66,9 @@ export function Poster({ progress, store, cap }: { progress: MotionValue<number>
   const apply = (p: number) => {
     const f = face.current;
     if (f) {
-      // hand over to WebGL just before the first turn (or keep the poster if WebGL isn't ready yet)
-      const handover = store.ready || store.fallback ? 1 - range(p, 0.028, 0.04) : 1;
+      // hand over just before the first turn: to WebGL, to the no-WebGL fallback, or to the SVG
+      // cube that stands in while WebGL is still loading (never a poster frozen over a turning cube)
+      const handover = store.ready || store.fallback || store.interim ? 1 - range(p, 0.028, 0.04) : 1;
       f.style.opacity = String(handover);
     }
     const d = deco.current;
@@ -136,21 +137,19 @@ export function Poster({ progress, store, cap }: { progress: MotionValue<number>
           <div className="mt-1 leading-none" style={{ fontFamily: "var(--f-tilt-warp)", fontSize: L.mobile ? 30 : 38 }}>
             Face Value
           </div>
+          {/* stacked: the figure note gets its own line under the title (side by side it collided at 360-390) */}
+          {L.mobile && (
+            <div className="mt-2 font-mono text-[9px] uppercase tracking-[0.2em]" style={{ color: alpha(RISO.ink, 0.55), whiteSpace: "nowrap" }}>
+              Fig. 03 — a perfectly flat poster.
+            </div>
+          )}
         </div>
-        {L.mobile && (
-          <div
-            className="absolute right-5 font-mono text-[9px] uppercase tracking-[0.2em]"
-            style={{ top: y + s / 2 + 40, color: alpha(RISO.ink, 0.55), textAlign: "right" }}
-          >
-            Fig. 03
-            <br />a perfectly flat poster.
-          </div>
-        )}
       </div>
 
       {/* the face itself */}
       <div
         ref={face}
+        aria-hidden
         className="pointer-events-none absolute"
         style={{
           left: x - s / 2,
@@ -163,7 +162,6 @@ export function Poster({ progress, store, cap }: { progress: MotionValue<number>
           transition: "opacity 240ms linear",
         }}
       >
-        <h2 className="sr-only">Scrambled at age 14. World 03.</h2>
         {Array.from({ length: 9 }, (_, i) => {
           const col = i % 3;
           const row = Math.floor(i / 3);

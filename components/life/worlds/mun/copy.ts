@@ -9,7 +9,6 @@
 export const COPY = {
   title: "ORDER",
   titleSub: "Model United Nations · Age 15",
-  headline: "The room turns.",
 
   paper: {
     stamp: "Position paper",
@@ -34,6 +33,8 @@ export const COPY = {
   sealCentre: "2ND",
   conferences: "MULTIPLE CONFERENCES",
   award: "2nd Best Delegate. Multiple conferences.",
+  /** the card's role line once the seal lands */
+  awardLabel: "2nd Best Delegate",
 } as const;
 
 /**

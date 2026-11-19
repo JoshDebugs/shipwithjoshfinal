@@ -113,13 +113,18 @@ export function useTicker(cb: (time: number, dt: number) => void, enabled?: bool
   }, [on]);
 }
 
-/** Call `cb(p)` immediately and whenever `progress` changes. */
+/** Call `cb(p)` immediately, whenever `progress` changes, and when the stage is resized. */
 export function useProgress(progress: MotionValue<number>, cb: (p: number) => void) {
   const cbRef = useRef(cb);
   cbRef.current = cb;
+  // A resize leaves progress unchanged, but layouts derived from the stage size
+  // must not wait for the next scroll to catch up.
+  const stage = useContext(StageContext);
+  const w = stage?.width ?? 0;
+  const h = stage?.height ?? 0;
   useIsoLayoutEffect(() => {
     cbRef.current(progress.get());
-  }, [progress]);
+  }, [progress, w, h]);
   useMotionValueEvent(progress, "change", (p) => cbRef.current(p));
 }
 

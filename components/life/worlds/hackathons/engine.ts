@@ -8,7 +8,7 @@ import { C, DEPTH, alpha } from "./colors";
 import { COPY } from "./copy";
 import type { Geo, PieceDef, Rect } from "./geometry";
 import { BakeJob, restPose, samplePose, type Bake, type Pose } from "./heap";
-import { B, R as RR, jolt, reveal, slam, story, typed, vhsAmount } from "./timeline";
+import { B, R as RR, jolt, pace, reveal, slam, story, typed, vhsAmount } from "./timeline";
 
 type El = HTMLElement | null;
 
@@ -121,6 +121,9 @@ export class Engine {
   private poseB: Pose = { x: 0, y: 0, rot: 0, impact: 0 };
   private sheetH = 0;
   private tagW: number[] = [];
+  private tagH: number[] = [];
+  /** Wanted tag spots this frame (x, y, floor), settled against each other in placeTags(). */
+  private tagWant: { x: number; y: number; min: number; on: boolean }[] = [];
   lowPower = false;
   /** Measured from the raw page (stage px). */
   rawSeat: { letters: Rect[]; links: Rect[]; box: Rect | null } = { letters: [], links: [], box: null };
@@ -309,15 +312,18 @@ export class Engine {
     if (R.sheet) this.sheetH = R.sheet.offsetHeight;
     R.tags.forEach((t, i) => {
       this.tagW[i] = t?.offsetWidth ?? 0;
+      this.tagH[i] = t?.offsetHeight ?? 0;
     });
     if (page) page.style.transform = saved;
   }
 
   /* ---------------------------------------------------------------- frame */
 
-  frame(p: number) {
+  frame(progress: number) {
     const g = this.g;
     if (!g) return;
+    // every beat below is on the paced clock (see timeline.ts)
+    const p = pace(progress);
     this.p = p;
     const s = story(p);
     this.s = s;
@@ -566,22 +572,31 @@ export class Engine {
     if (!def || !el) return;
     const on = s >= def.appear;
     vis(el, on);
+    const tag = def.tag ? R.tags[i] : null;
+    const tagOn = on && s >= B.debugA && s < B.reloadB;
+    if (tag) vis(tag, tagOn);
     if (!on) return;
     const st = this.pieceTransform(i, def, s);
     el.style.transform = `translate3d(${st.x.toFixed(2)}px, ${st.y.toFixed(2)}px, 0) rotate(${st.rot.toFixed(2)}deg) scale(${st.sx.toFixed(3)}, ${st.sy.toFixed(3)})`;
-    // inspector tags stay upright whatever the piece landed on
-    if (def.tag && s >= B.debugA && s < B.reloadB) {
-      const tag = R.tags[i];
-      if (tag) {
-        // keep it upright, and nudge it back on stage if its corner landed near an edge
-        const a = (st.rot * Math.PI) / 180;
-        const hw = def.rect.w / 2;
-        const hh = def.rect.h / 2;
-        const px = def.rect.x + hw + st.x - hw * Math.cos(a) + hh * Math.sin(a);
-        const tw = this.tagW[i] ?? 0;
-        const nudge = px < 8 ? 8 - px : px + tw > g.W - 8 ? g.W - 8 - px - tw : 0;
-        tag.style.transform = `translateX(${nudge.toFixed(1)}px) rotate(${(-st.rot).toFixed(1)}deg)`;
-      }
+    // inspector tags: upright, on the top-left of the piece's bounding box, like devtools
+    const want = (this.tagWant[i] ??= { x: 0, y: 0, min: 0, on: false });
+    want.on = !!tag && tagOn;
+    if (tag && tagOn) {
+      const a = (st.rot * Math.PI) / 180;
+      const hw = (def.rect.w / 2) * st.sx;
+      const hh = (def.rect.h / 2) * st.sy;
+      const round = def.kind === "sun" || def.kind === "sticker" || def.kind === "burst";
+      const bw = round ? hw : Math.abs(hw * Math.cos(a)) + Math.abs(hh * Math.sin(a));
+      const bh = round ? hh : Math.abs(hw * Math.sin(a)) + Math.abs(hh * Math.cos(a));
+      const cx = def.rect.x + def.rect.w / 2 + st.x;
+      const cy = def.rect.y + def.rect.h / 2 + st.y;
+      const tw = this.tagW[i] ?? 0;
+      const th = this.tagH[i] ?? 0;
+      want.x = clamp(cx - bw, 8, g.W - 8 - tw);
+      // once the error sheet comes down, labels keep below it (they ride down onto the pile)
+      const floorY = (this.bake?.top ?? g.floor) - th - 2;
+      want.min = lerp(4, floorY, reveal(s, B.sheetA, B.sheetHit));
+      want.y = Math.max(cy - bh - th - 4 * g.u, want.min);
     }
     if (def.kind === "letter") {
       const glyph = R.glyphs[i];
@@ -596,10 +611,34 @@ export class Engine {
     }
   }
 
+  /** Settle the inspector tags against each other: a later tag that lands on an earlier one steps aside. */
+  private placeTags() {
+    const R = this.R;
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    const gap = 3;
+    this.tagWant.forEach((t, i) => {
+      const el = R.tags[i];
+      if (!t || !t.on || !el) return;
+      const w = this.tagW[i] ?? 0;
+      const h = this.tagH[i] ?? 0;
+      let y = t.y;
+      for (let pass = 0; pass < 6; pass++) {
+        const hit = placed.find((q) => t.x < q.x + q.w + gap && t.x + w + gap > q.x && y < q.y + q.h + gap && y + h + gap > q.y);
+        if (!hit) break;
+        // step above it if there is room under the sheet, otherwise below it
+        const up = hit.y - h - gap;
+        y = up >= t.min ? up : hit.y + hit.h + gap;
+      }
+      placed.push({ x: t.x, y, w, h });
+      el.style.transform = `translate3d(${t.x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    });
+  }
+
   private framePieces(s: number) {
     const R = this.R;
     const g = this.g!;
     for (let i = 0; i < g.pieces.length; i++) this.writePiece(i, s);
+    this.placeTags();
     // chips light up as their verb happens
     const lit = [B.buildLit, B.debugA, B.projA, B.dimB];
     g.pieces.forEach((def, i) => {
@@ -689,7 +728,8 @@ export class Engine {
 
     // the whole page carries one small jolt when the sheet lands
     if (R.reloadPill) {
-      const e = bell(s, B.reloadA, B.reloadA + 0.008, B.reloadB, B.reloadB + 0.01);
+      // a phone has no free slot for it: there the status bar says it instead
+      const e = g.mobile ? 0 : bell(s, B.reloadA, B.reloadA + 0.008, B.reloadB, B.reloadB + 0.01);
       R.reloadPill.style.opacity = String(e);
       R.reloadPill.style.transform = `translate(-50%, ${((1 - e) * -12).toFixed(1)}px)`;
     }
@@ -932,6 +972,7 @@ export class Engine {
     else if (s < B.toast3) msg = "age 18 · compiling…";
     else if (s < B.debugA) msg = "age 18 · compiled ✓";
     else if (s < B.reloadA) msg = "age 18 · 1 error";
+    else if (s < B.reloadB + 0.01) msg = phone ? "↻ hot reload · 94ms" : "↻ hot reload · 1 file changed · 94ms";
     else msg = "age 18 · presenting";
     setText(R.statusText, msg);
   }
@@ -980,6 +1021,7 @@ export class Engine {
     if (this.motion > 0) {
       this.spin += dt * 26 * this.motion;
       g.pieces.forEach((_, i) => this.writePiece(i, this.s));
+      this.placeTags();
     } else if (this.s >= B.crash && this.s < B.reloadA && this.spin % 360 > 0.5) {
       // settle the burst's spin back without jumping
       this.spin += (360 - (this.spin % 360)) * Math.min(1, dt * 5);

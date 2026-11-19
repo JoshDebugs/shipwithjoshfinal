@@ -2,13 +2,14 @@
 
 import { useMemo, useRef } from "react";
 import type { MotionValue } from "framer-motion";
-import { useProgress } from "@/components/life/multiverse/runtime";
+import { useIsoLayoutEffect, useProgress } from "@/components/life/multiverse/runtime";
 import { RISO, alpha } from "@/components/life/multiverse/palette";
 import { backOut, clamp, easeInCubic, easeOutCubic, lerp, range } from "@/components/life/multiverse/ease";
 import { newCam, newProj, project } from "./hall";
 import { archivo, martian } from "./ink";
 import { camAt, type Layout } from "./layout";
-import { BURST, ConferenceStamp, Seal } from "./Seal";
+import { COPY } from "./copy";
+import { BURST, ConferenceStamp, SEAL_AT, Seal } from "./Seal";
 import { B, dropT } from "./timeline";
 
 
@@ -20,6 +21,8 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
   const wrapRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
   const sealRef = useRef<HTMLDivElement>(null);
+  const roleRef = useRef<HTMLSpanElement>(null);
+  const awardRef = useRef<HTMLSpanElement>(null);
   const burstRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cam = useMemo(newCam, []);
   const pr = useMemo(newProj, []);
@@ -27,7 +30,7 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
   const ch = (cw * L.geo.card.h) / L.geo.card.w;
   const balloonMax = L.portrait ? 1.36 : 1.35;
 
-  useProgress(progress, (p) => {
+  const apply = (p: number) => {
     const wrap = wrapRef.current;
     if (!wrap) return;
     const d = dropT(p);
@@ -45,7 +48,8 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
     const leave = range(p, B.exitCam[0], B.exitCam[0] + 0.05);
     // as the camera cranes up and back, the near card drops out of the bottom of frame (it doesn't ghost)
     const drop = easeInCubic(leave) * (L.h - pr.y + ch * scale * 1.8);
-    wrap.style.opacity = String(clamp((d - 0.3) / 0.25) * (1 - range(leave, 0.75, 1)));
+    // it fades early in the crane-up, so it never sits half-cropped under the closing line
+    wrap.style.opacity = String(clamp((d - 0.3) / 0.25) * (1 - range(leave, 0.2, 0.6)));
     wrap.style.transform = `translate3d(${pr.x - cw / 2}px, ${pr.y - ch / 2 + drop}px, 0) scale(${scale}) scaleY(${lerp(0.55, 1, stand)})`;
 
     const name = nameRef.current;
@@ -61,6 +65,10 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
       seal.style.transform = `translate(-50%, -50%) rotate(${lerp(-24, -9, easeOutCubic(s))}deg) scale(${lerp(2.2, 1, easeOutCubic(s))})`;
       seal.style.visibility = s > 0 ? "visible" : "hidden";
     }
+    // the card's role line is promoted the instant the seal bites
+    const won = p >= B.seal[0] + (B.seal[1] - B.seal[0]) * 0.6;
+    if (roleRef.current) roleRef.current.style.display = won ? "none" : "inline";
+    if (awardRef.current) awardRef.current.style.display = won ? "inline" : "none";
     const n = BURST.length;
     burstRefs.current.forEach((el, i) => {
       if (!el) return;
@@ -70,7 +78,11 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
       el.style.visibility = s > 0 ? "visible" : "hidden";
       el.style.transform = `translate(-50%, -50%) rotate(${BURST[i].r}deg) scale(${lerp(1.7, 1, easeOutCubic(s))})`;
     });
-  });
+  };
+  useProgress(progress, apply);
+  // a resize changes the layout without moving progress: re-place the card at once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useIsoLayoutEffect(() => apply(progress.get()), [L]);
 
   const stampFs = L.portrait ? 16 : 23;
   const sealSize = ch * 1.22;
@@ -84,7 +96,12 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
         className="absolute inset-0 flex flex-col justify-between"
         style={{ background: RISO.sun, color: RISO.ink, padding: `${ch * 0.11}px ${cw * 0.06}px ${ch * 0.12}px`, boxShadow: `0 ${ch * 0.07}px 0 ${alpha(RISO.ink, 0.35)}` }}
       >
-        <div style={{ ...martian, fontSize: Math.round(ch * 0.085), letterSpacing: "0.22em" }}>Delegate</div>
+        <div style={{ ...martian, fontSize: Math.round(ch * 0.085), letterSpacing: "0.22em" }}>
+          <span ref={roleRef}>Delegate</span>
+          <span ref={awardRef} style={{ display: "none" }}>
+            {COPY.awardLabel}
+          </span>
+        </div>
         <div ref={nameRef} style={{ ...archivo(62, 900), fontSize: ch * 0.5, lineHeight: 0.86, letterSpacing: "0.005em" }}>
           JOSH
         </div>
@@ -97,7 +114,7 @@ export function JoshCard({ L, progress }: { L: Layout; progress: MotionValue<num
       <div
         ref={sealRef}
         className="absolute"
-        style={{ left: cw * 0.79, top: ch * 0.5, mixBlendMode: "multiply", visibility: "hidden", opacity: 0, transformOrigin: "50% 50%" }}
+        style={{ left: cw * SEAL_AT.x, top: ch * SEAL_AT.y, mixBlendMode: "multiply", visibility: "hidden", opacity: 0, transformOrigin: "50% 50%" }}
       >
         <Seal size={sealSize} id="mun-seal-live" />
       </div>

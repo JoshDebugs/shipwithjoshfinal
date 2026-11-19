@@ -18,6 +18,10 @@ function drawGavel(ctx: CanvasRenderingContext2D) {
   };
   ctx.save();
   ctx.scale(K, K);
+  // the resting gavel is drawn at the portal's birth angle: -6deg about the anchor (42, 34)
+  ctx.translate(42, 34);
+  ctx.rotate((-6 * Math.PI) / 180);
+  ctx.translate(-42, -34);
   ctx.fillStyle = "#000";
   // head + caps, rotated -35° about (42, 34)
   ctx.save();

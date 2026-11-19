@@ -34,7 +34,12 @@ function Leader() {
 export function RowInk({ row, children }: { row: Row; children?: ReactNode }) {
   switch (row.kind) {
     case "gap":
-      return children ? <div style={line}>{children}</div> : null;
+      return children || row.sr ? (
+        <div style={line}>
+          {row.sr && <span className="sr-only">{row.sr}</span>}
+          {children}
+        </div>
+      ) : null;
 
     case "stars":
       return (

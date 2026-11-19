@@ -59,6 +59,28 @@ const MAP: Record<string, Seg[]> = {
   ".": ["dp"],
 };
 
+/**
+ * Segment noise: glyphs that are never a digit or a letter (every one lights a
+ * diagonal plus a random spray), so a churning readout can never be read as a
+ * time, even frozen on a single frame.
+ */
+export const NOISE = "!#$%&*/<=>@[]^_{|}~";
+const DIAG: Seg[] = ["h", "j", "k", "m"];
+{
+  const pool: Seg[] = ["a1", "a2", "b", "c", "d1", "d2", "e", "f", "g1", "g2", "i", "l"];
+  let seed = 0x2f6b1d3;
+  const rnd = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let n = 0; n < NOISE.length; n++) {
+    const on: Seg[] = [DIAG[n % 4]];
+    if (rnd() < 0.5) on.push(DIAG[(n + 1 + Math.floor(rnd() * 3)) % 4]);
+    for (const s of pool) if (rnd() < 0.36) on.push(s);
+    MAP[NOISE[n]] = on;
+  }
+}
+
 const T = 1.5; // segment thickness
 const G = 0.32; // gap
 const hSeg = (x0: number, x1: number, y: number) => {

@@ -69,7 +69,7 @@ export default function FitnessWorld({ progress }: WorldProps) {
     engine.setProgress(progress.get());
   }, [engine, g, stage.lowPower, progress]);
 
-  // heat-type: first with whatever is loaded, then again once Unbounded arrives
+  // heat-type: built once, after Unbounded arrives (or fails to), never with a fallback face
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -77,18 +77,15 @@ export default function FitnessWorld({ progress }: WorldProps) {
     const family = heatFamily(root);
     const build = () => {
       if (dead) return;
-      const scale = rendererKind.current === "cpu" ? 1 / g.fieldDiv : Math.min(window.devicePixelRatio || 1, 1.5);
+      const scale = rendererKind.current === "cpu" ? 1 / g.fieldDiv : Math.min(window.devicePixelRatio || 1, stage.lowPower ? 1.25 : 1.5);
       const masks = buildWordMasks(g, family, scale);
       if (masks) engine.setWords(masks);
     };
-    build();
-    void loadHeatFont(family).then((ok) => {
-      if (ok) build();
-    });
+    void loadHeatFont(family).then(() => build());
     return () => {
       dead = true;
     };
-  }, [engine, g]);
+  }, [engine, g, stage.lowPower]);
 
   useProgress(progress, (p) => engine.setProgress(p));
 
@@ -97,7 +94,7 @@ export default function FitnessWorld({ progress }: WorldProps) {
   });
 
   return (
-    <div ref={rootRef} className="absolute inset-0 overflow-hidden" style={{ background: C.field, touchAction: "pan-y" }}>
+    <div ref={rootRef} data-swipe-ignore className="absolute inset-0 overflow-hidden" style={{ background: C.field, touchAction: "pan-y" }}>
       <h2 className="sr-only">Fitness, age 18: Heat Signature. Built the body too.</h2>
       <p className="sr-only">Discipline. Training. Nutrition. Consistency.</p>
       <div

@@ -78,8 +78,13 @@ export type Layout = {
   end: { s: number; x: number; y: number };
 };
 
+/** Phones and portrait tablets get the stacked layout (cube on top, captions below). */
+export function stacked(w: number, h: number): boolean {
+  return w < 768 || h / Math.max(1, w) > 1.2;
+}
+
 export function layout(w: number, h: number): Layout {
-  const mobile = w < 768;
+  const mobile = stacked(w, h);
   if (mobile) {
     const s = Math.min(w - 28, h * 0.5);
     return {
@@ -91,11 +96,16 @@ export function layout(w: number, h: number): Layout {
     };
   }
   const s = Math.min(h * 0.68, w * 0.5);
+  // keep the cube clear of the caption column (mirrors frame(): x .045w, width clamp(.34w, 360, 500)); a no-op on wide stages
+  const colRight = w * 0.045 + Math.min(500, Math.max(360, w * 0.34)) + 16;
+  const avail = w - colRight;
+  const vs = Math.min(h * 0.92, w * 0.62, avail * 0.95);
+  const ps = Math.min(h * 0.88, w * 0.6, avail * 0.95);
   return {
     mobile,
     poster: { s, x: w / 2, y: h * 0.535 },
-    view: { s: Math.min(h * 0.92, w * 0.62), x: w * 0.655, y: h * 0.53 },
-    play: { s: Math.min(h * 0.88, w * 0.6), x: w * 0.64, y: h * 0.52 },
+    view: { s: vs, x: Math.max(w * 0.655, colRight + vs * 0.44), y: h * 0.53 },
+    play: { s: ps, x: Math.max(w * 0.64, colRight + ps * 0.44), y: h * 0.52 },
     end: { s: Math.min(h * 0.64, w * 0.48), x: w / 2, y: h * 0.53 },
   };
 }

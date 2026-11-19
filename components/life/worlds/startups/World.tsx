@@ -21,7 +21,7 @@ import { BicepSticker, Bow, DotText } from "./glyphs";
 import { Halftone, type Flood } from "./halftone";
 import { PriceGun } from "./PriceGun";
 import { RowInk } from "./RowInk";
-import { IDX, ROWS } from "./rows";
+import { IDX, ROWS, STAMP_LAND } from "./rows";
 import { Stamp, StampRig } from "./Stamp";
 import { Printer } from "./Printer";
 import { SwingTag } from "./SwingTag";
@@ -57,7 +57,12 @@ export default function StartupsWorld({ progress }: WorldProps) {
     if (canvas) {
       if (!halftone.current) halftone.current = new Halftone(canvas);
       const dpr = Math.min(window.devicePixelRatio || 1, stage.lowPower ? 1 : 1.5);
-      halftone.current.setup(g.W + PAD * 2, g.H + PAD * 2, g.grid, dpr, floodsFor(g), {
+      // keep the flood under its instance budget (§3.11): coarsen the pitch on big or low-power stages
+      const hw = g.W + PAD * 2;
+      const hh = g.H + PAD * 2;
+      const cap = stage.lowPower ? 500 : 2600;
+      const pitch = Math.max(g.grid, Math.ceil(Math.sqrt((hw * hh) / (0.866 * cap))));
+      halftone.current.setup(hw, hh, pitch, dpr, floodsFor(g), {
         x: 0,
         y: 0,
         a: 0,
@@ -69,6 +74,11 @@ export default function StartupsWorld({ progress }: WorldProps) {
         peak: 0.1,
       });
     }
+    engine.wordBands = WORDS.map((_, k) => {
+      const { size, y, lines } = wordLayout(g, k);
+      const half = (size * 0.88 * lines.length) / 2;
+      return { top: y - half, bottom: y + half };
+    });
     const p = progress.get();
     engine.frame(p);
     halftone.current?.render(p);
@@ -269,6 +279,7 @@ export default function StartupsWorld({ progress }: WorldProps) {
                 ref={(el) => {
                   R.inks[i] = el;
                 }}
+                aria-hidden={row.kind === "digits" ? true : undefined}
                 className="absolute inset-x-0 top-0"
                 style={{ height: h }}
               >
@@ -335,12 +346,12 @@ export default function StartupsWorld({ progress }: WorldProps) {
               shadow: (el) => (R.stampSShadow = el),
               spatter: (el) => (R.stampSSpatter = el),
             }}
-            x={rw * 0.55}
-            y={g.h[IDX["s-stamp"]] * 0.52}
-            width={rw * (g.mobile ? 0.56 : 0.5)}
+            x={rw * STAMP_LAND.s.x}
+            y={stampY(g, "s")}
+            width={rw * STAMP_LAND.s.w[g.mobile ? 1 : 0]}
             color={C.cobalt}
           >
-            <Stamp id="shipped" lines={["SHIPPED"]} color={C.cobalt} width={rw * (g.mobile ? 0.56 : 0.5)} seed={4} />
+            <Stamp id="shipped" lines={["SHIPPED"]} color={C.cobalt} width={rw * STAMP_LAND.s.w[g.mobile ? 1 : 0]} seed={4} />
           </StampRig>
         </div>
 
@@ -407,17 +418,17 @@ export default function StartupsWorld({ progress }: WorldProps) {
               shadow: (el) => (R.stampFShadow = el),
               spatter: (el) => (R.stampFSpatter = el),
             }}
-            x={rw * 0.5}
-            y={g.h[IDX["f-stamp"]] * 0.52}
-            width={rw * (g.mobile ? 0.6 : 0.54)}
+            x={rw * STAMP_LAND.f.x}
+            y={stampY(g, "f")}
+            width={rw * STAMP_LAND.f.w[g.mobile ? 1 : 0]}
             color={C.teal}
           >
-            <Stamp id="sold" lines={["LIVE +", "SOLD IRL"]} label="Live + sold IRL" color={C.teal} width={rw * (g.mobile ? 0.6 : 0.54)} seed={23} />
+            <Stamp id="sold" lines={["LIVE +", "SOLD IRL"]} label="Live + sold IRL" color={C.teal} width={rw * STAMP_LAND.f.w[g.mobile ? 1 : 0]} seed={23} />
           </StampRig>
         </div>
 
         {/* 003 · FOR SALE swing tag */}
-        <div {...overlay(tagRow)}>
+        <div {...overlay(tagRow)} aria-hidden>
           <SwingTag g={g} R={R} rowH={g.h[tagRow]} />
         </div>
 
@@ -490,6 +501,12 @@ export default function StartupsWorld({ progress }: WorldProps) {
 
 /* ------------------------------------------------------------ helpers */
 
+/** A stamp's resting centre y inside its row (the rows carry the status for screen readers). */
+function stampY(g: Geo, k: "s" | "f") {
+  const L = STAMP_LAND[k];
+  return g.h[IDX[L.row]] * 0.5 + L.dy * g.u;
+}
+
 function stickerRect(g: Geo) {
   const s = g.sticker;
   // the bicep's visual centre (≈42%, 42% of the icon box) sits just above the slot, its elbow on the stub
@@ -525,8 +542,8 @@ function floodsFor(g: Geo): Flood[] {
   const st = stickerRect(g);
   return [
     {
-      x: g.rx + g.rw * 0.55 + PAD,
-      y: rowBottomY(g, sRow, B.sStampHit) - g.h[sRow] * 0.48 + PAD,
+      x: g.rx + g.rw * STAMP_LAND.s.x + PAD,
+      y: rowBottomY(g, sRow, B.sStampHit) - g.h[sRow] + stampY(g, "s") + PAD,
       a: B.sFloodA,
       b: B.sFloodB,
       shape: "star",
@@ -536,8 +553,8 @@ function floodsFor(g: Geo): Flood[] {
       peak: 0.98,
     },
     {
-      x: g.rx + g.rw * 0.5 + PAD,
-      y: rowBottomY(g, fRow, B.fStampHit) - g.h[fRow] * 0.48 + PAD,
+      x: g.rx + g.rw * STAMP_LAND.f.x + PAD,
+      y: rowBottomY(g, fRow, B.fStampHit) - g.h[fRow] + stampY(g, "f") + PAD,
       a: B.fFloodA,
       b: B.fFloodB,
       shape: "bow",

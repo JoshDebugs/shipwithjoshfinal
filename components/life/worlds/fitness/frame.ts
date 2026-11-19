@@ -147,14 +147,15 @@ export function computeFrame(F: Frame, p: number, time: number, g: Geo, o: Frame
 
   const bloom = bloomAt(p);
   const e = exitAt(p);
-  F.bloom = bloom;
+  // phones: the chest bloom would cover the whole wall, so it stays tighter
+  F.bloom = g.mobile ? bloom * 0.5 : bloom;
   F.exitK = 1 - 0.72 * e;
   F.fh = fh;
   F.k = g.k;
   F.edge = g.edge;
   F.fall = fh * 0.035;
-  F.haloR = fh * (0.045 + 0.06 * bloom + 0.02 * work);
-  F.haloAmt = 0.3 + 0.12 * work + 0.3 * bloom;
+  F.haloR = fh * (0.045 + (g.mobile ? 0 : 0.06) * bloom + 0.02 * work);
+  F.haloAmt = 0.3 + 0.12 * work + (g.mobile ? 0.08 : 0.3) * bloom;
   F.mottle = 0.16;
 
   F.floorY = g.floorY;
@@ -186,9 +187,10 @@ export function computeFrame(F: Frame, p: number, time: number, g: Geo, o: Frame
 
   // heat-type
   for (let k = 0; k < 5; k++) {
-    const w = wordHeat(p, k);
+    // phones keep the lockout words a step warmer so they read above the halo
+    const w = wordHeat(p, k, g.mobile ? 0.5 : 0.29);
     let i = w.i;
-    if (o.still && k > 0) i = 0.31;
+    if (o.still && k > 0) i = g.mobile ? 0.5 : 0.31;
     F.wordT[k] = i * WORD_PEAK[k];
     F.wordBlur[k] = o.still ? 0.35 : w.blur;
   }

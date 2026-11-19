@@ -57,7 +57,9 @@ function shapePath(id: ShapeId): Path2D {
     p.quadraticCurveTo(1.08, 0, 0.95, 0.72);
     p.lineTo(0.14, 0.08);
     p.closePath();
-    p.roundRect(-0.24, -0.3, 0.48, 0.6, 0.12);
+    // knot (Path2D.roundRect is missing on Safari < 16)
+    if (typeof p.roundRect === "function") p.roundRect(-0.24, -0.3, 0.48, 0.6, 0.12);
+    else p.rect(-0.24, -0.3, 0.48, 0.6);
   } else {
     p.moveTo(0, -1);
     p.lineTo(0.92, -0.04);

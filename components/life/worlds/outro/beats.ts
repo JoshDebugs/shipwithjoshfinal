@@ -5,19 +5,22 @@ export const BEAT = {
   iconsIn: [0.012, 0.044],
   unspool: [0.044, 0.094],
   titleOut: [0.068, 0.094],
-  flight: [0.09, 0.285],
-  chaos: [0.112, 0.262],
-  crane: [0.285, 0.36],
-  scan: [0.362, 0.402],
-  stamp: 0.402,
-  headlineOut: [0.448, 0.464],
-  domains: [0.46, 0.514],
-  honest: [0.506, 0.56],
-  toValues: [0.556, 0.578],
-  values: [0.574, 0.806],
-  finale: [0.806, 0.868],
-  next: [0.86, 0.942],
-  story: [0.938, 0.974],
+  flight: [0.09, 0.254],
+  chaos: [0.112, 0.234],
+  crane: [0.254, 0.329],
+  scan: [0.331, 0.371],
+  stamp: 0.371,
+  headlineOut: [0.417, 0.433],
+  // all nine lit by ~.482, held until the honest line takes the column at .50
+  domains: [0.429, 0.485],
+  // fully in by ~.526, held at full strength to ~.571
+  honest: [0.5, 0.585],
+  toValues: [0.585, 0.607],
+  values: [0.603, 0.794],
+  // stacked: CURRENTLY typed by ~.825 and held to .855; NEXT in by ~.893 and held to ~.938
+  finale: [0.794, 0.857],
+  next: [0.855, 0.94],
+  story: [0.95, 0.98],
 } as const;
 
 /** Slot of value `i` inside the values beat, as [start, end]. */

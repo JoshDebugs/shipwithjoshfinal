@@ -259,7 +259,7 @@ export function foodFlare(p: number, f: Food) {
 /* ---------------------------------------------------------------- words */
 
 /** Heat of each heat-type mask (0 headline, 1–4 pillar words): intensity and bleed (blur). */
-export function wordHeat(p: number, k: number) {
+export function wordHeat(p: number, k: number, floor = 0.29) {
   if (k === 0) {
     const cool = easeInOutSine(range(p, B.headCoolA, B.headCoolB));
     return { i: 1 - cool, blur: 0.12 + 0.88 * cool };
@@ -272,7 +272,7 @@ export function wordHeat(p: number, k: number) {
   const bloom = easeInOutSine(range(p, 0.84, 0.9));
   let i = rise * lerp(1, 0.25, bleed);
   i += rise * resurf * (k < 4 ? 0.05 : 0.02);
-  i = lerp(i, Math.max(i, 0.29), bloom * rise);
+  i = lerp(i, Math.max(i, floor), bloom * rise);
   // the auto-range wipes the wall: the exit frame is the figure and the lamp alone
   i *= 1 - 0.8 * easeInOutSine(range(p, B.exitA - 0.01, B.exitB - 0.01));
   const blur = clamp(0.06 + bleed * 0.9 - resurf * 0.3 - bloom * 0.2);

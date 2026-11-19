@@ -33,7 +33,12 @@ export default function JeeWorld({ progress }: WorldProps) {
   const pointer = usePointer();
 
   const rig = useMemo(() => makeRig(Math.max(1, stage.width), Math.max(1, stage.height)), [stage.width, stage.height]);
-  const { lowPower: low, isMobile: mob } = stage;
+  const low = stage.lowPower;
+  // Copy follows the camera framing: every portrait stage (phones and tablets) gets the
+  // phone's top band, which the beam cut-off keeps dark. Type grows with the stage width.
+  const mob = rig.mobile;
+  const k = mob ? clamp(rig.W / 470, 1, 1.75) : 1;
+  const km = Math.min(k, 1.3);
 
   const wobble = useRef(0);
   const dark = useRef<HTMLDivElement>(null);
@@ -86,14 +91,14 @@ export default function JeeWorld({ progress }: WorldProps) {
 
   // Title label: an eyebrow on the lit wall, above the letters, clear of the pile.
   const titleAnchor = wallToNdc(rig.title, rig.asp, rig.jee.u0 + (rig.jee.sx * (1.4782 + 0.0213)) / 2, rig.jee.v0 + rig.jee.sy);
-  const labelTop = ((1 - titleAnchor[1]) / 2) * rig.H - (mob ? 26 : 36);
+  const labelTop = ((1 - titleAnchor[1]) / 2) * rig.H - (mob ? 26 * km : 36);
 
   // Copy always sits on plaster the lamp is not reaching: beyond the corner, or right of the shape.
   const planLeft = Math.max(cornerScreenX(rig, rig.a) + 44, rig.W * 0.7);
   const heroLeft = Math.max(originRect.left + originRect.size + 56, rig.W * 0.68);
   const mobileTop = Math.round(rig.H * 0.125);
   const heroBox: CSSProperties = mob
-    ? { left: 22, right: 22, top: mobileTop }
+    ? { left: Math.round(22 * k), right: Math.round(22 * k), top: mobileTop }
     : { left: heroLeft, width: rig.W - heroLeft - 36, top: rig.H * 0.23 };
 
   return (
@@ -120,7 +125,7 @@ export default function JeeWorld({ progress }: WorldProps) {
           top: labelTop,
           fontFamily: MONO,
           color: RISO.ink,
-          fontSize: mob ? 11 : 13,
+          fontSize: mob ? 11 * km : 13,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
           fontWeight: 500,
@@ -133,18 +138,18 @@ export default function JeeWorld({ progress }: WorldProps) {
       <div
         ref={planWrap}
         className="pointer-events-none absolute"
-        style={mob ? { left: 22, width: "56%", top: mobileTop, opacity: 0 } : { left: planLeft, width: rig.W - planLeft - 36, top: "24%", opacity: 0 }}
+        style={mob ? { left: Math.round(22 * k), width: "56%", top: mobileTop, opacity: 0 } : { left: planLeft, width: rig.W - planLeft - 36, top: "24%", opacity: 0 }}
       >
-        <p style={{ fontFamily: FRAUNCES, color: RISO.paper, fontSize: mob ? 15 : "clamp(17px, 1.5vw, 24px)", lineHeight: 1.3, fontVariationSettings: '"SOFT" 40, "WONK" 0, "opsz" 36, "wght" 360' }}>
+        <p style={{ fontFamily: FRAUNCES, color: RISO.paper, fontSize: mob ? 15 * km : "clamp(17px, 1.5vw, 24px)", lineHeight: 1.3, fontVariationSettings: '"SOFT" 40, "WONK" 0, "opsz" 36, "wght" 360' }}>
           ~2 years of JEE prep.
         </p>
-        <p style={{ fontFamily: FRAUNCES, color: RISO.paper, fontSize: mob ? 26 : "clamp(30px, 3.4vw, 54px)", lineHeight: 1.06, marginTop: mob ? 2 : 10, fontVariationSettings: '"SOFT" 40, "WONK" 0, "opsz" 72, "wght" 480' }}>
+        <p style={{ fontFamily: FRAUNCES, color: RISO.paper, fontSize: mob ? 26 * k : "clamp(30px, 3.4vw, 54px)", lineHeight: 1.06, marginTop: mob ? 2 : 10, fontVariationSettings: '"SOFT" 40, "WONK" 0, "opsz" 72, "wght" 480' }}>
           The plan had a shape.
         </p>
       </div>
 
       {/* Lights out */}
-      <div className="pointer-events-none absolute inset-0" style={{ padding: mob ? "0 24px" : "0 12vw" }}>
+      <div className="pointer-events-none absolute inset-0" style={{ padding: mob ? `0 ${Math.round(24 * k)}px` : "0 12vw" }}>
         <div className="flex h-full flex-col justify-center" style={{ maxWidth: 980 }}>
           <p
             ref={failA}
@@ -152,7 +157,7 @@ export default function JeeWorld({ progress }: WorldProps) {
               visibility: "hidden",
               fontFamily: FRAUNCES,
               color: RISO.paper,
-              fontSize: mob ? 44 : "clamp(52px, 7vw, 108px)",
+              fontSize: mob ? Math.min(100, (44 * rig.W) / 390) : "clamp(52px, 7vw, 108px)",
               lineHeight: 1.04,
               fontVariationSettings: '"SOFT" 0, "WONK" 0, "opsz" 144, "wght" 380',
               letterSpacing: "-0.012em",
@@ -166,7 +171,7 @@ export default function JeeWorld({ progress }: WorldProps) {
               visibility: "hidden",
               fontFamily: FRAUNCES,
               color: alpha(RISO.paper, 0.72),
-              fontSize: mob ? 24 : "clamp(26px, 3vw, 44px)",
+              fontSize: mob ? Math.min(52, (24 * rig.W) / 390) : "clamp(26px, 3vw, 44px)",
               lineHeight: 1.2,
               marginTop: mob ? 18 : 26,
               fontVariationSettings: '"SOFT" 0, "WONK" 0, "opsz" 72, "wght" 300',
@@ -185,7 +190,7 @@ export default function JeeWorld({ progress }: WorldProps) {
           opacity: 0,
           fontFamily: FRAUNCES,
           color: RISO.paper,
-          fontSize: mob ? 36 : "clamp(40px, 4.8vw, 74px)",
+          fontSize: mob ? 36 * k : "clamp(40px, 4.8vw, 74px)",
           lineHeight: 1.02,
           fontVariationSettings: '"SOFT" 40, "WONK" 0, "opsz" 96, "wght" 420',
           ...heroBox,
@@ -202,7 +207,7 @@ export default function JeeWorld({ progress }: WorldProps) {
           opacity: 0,
           fontFamily: FRAUNCES,
           color: RISO.paper,
-          fontSize: mob ? 38 : "clamp(44px, 5.2vw, 80px)",
+          fontSize: mob ? 38 * k : "clamp(44px, 5.2vw, 80px)",
           lineHeight: 1.02,
           ...heroBox,
         }}
@@ -219,10 +224,10 @@ export default function JeeWorld({ progress }: WorldProps) {
           opacity: 0,
           fontFamily: MONO,
           color: RISO.paper,
-          fontSize: mob ? 11 : 13,
+          fontSize: mob ? 11 * km : 13,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
-          ...(mob ? { left: 24, top: mobileTop + 96 } : { left: heroLeft, top: rig.H * 0.23 + Math.min(80, 0.052 * rig.W) * 2.04 + 22 }),
+          ...(mob ? { left: Math.round(24 * k), top: mobileTop + Math.round(96 * k) } : { left: heroLeft, top: rig.H * 0.23 + Math.min(80, 0.052 * rig.W) * 2.04 + 22 }),
         }}
       >
         Same pile. New angle.
@@ -236,10 +241,10 @@ export default function JeeWorld({ progress }: WorldProps) {
           opacity: 0,
           fontFamily: MONO,
           color: alpha(RISO.paper, 0.82),
-          fontSize: mob ? 10.5 : 12,
+          fontSize: mob ? 10.5 * km : 12,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
-          ...(mob ? { left: 24, top: mobileTop + 88 } : { left: heroLeft, top: rig.H * 0.23 + Math.min(74, 0.048 * rig.W) * 2.04 + 22 }),
+          ...(mob ? { left: Math.round(24 * k), top: mobileTop + Math.round(88 * k) } : { left: heroLeft, top: rig.H * 0.23 + Math.min(74, 0.048 * rig.W) * 2.04 + 22 }),
         }}
       >
         Lamp <span ref={proofAngle}>20</span>° · pile moved 0.00 mm

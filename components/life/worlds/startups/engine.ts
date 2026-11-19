@@ -12,7 +12,7 @@ import { backOut, bell, clamp, easeInCubic, easeInOutCubic, easeOutCubic, lerp, 
 import type { Geo } from "./geometry";
 import { cumAt } from "./geometry";
 import { B, cursor, jolt, slam, slotY } from "./timeline";
-import { DOTO, IDX, PRINTS, ROWS } from "./rows";
+import { DOTO, IDX, PRINTS, ROWS, STAMP_LAND } from "./rows";
 
 const N = ROWS.length;
 const HIST = 96;
@@ -42,6 +42,7 @@ export type Refs = {
   hot: HTMLDivElement | null;
   head: HTMLDivElement | null;
   lcd: HTMLSpanElement | null;
+  hint: HTMLDivElement | null;
   led: HTMLSpanElement | null;
   stub: HTMLDivElement | null;
   spec: HTMLDivElement | null;
@@ -78,6 +79,7 @@ export function emptyRefs(): Refs {
     hot: null,
     head: null,
     lcd: null,
+    hint: null,
     led: null,
     stub: null,
     spec: null,
@@ -117,7 +119,7 @@ function lcdText(p: number): string {
   if (p < 0.2) return "STAMPED";
   if (p < B.ribbonA) return "PRINTING 2/3";
   if (p < 0.342) return "GIFT WRAP";
-  if (p < B.barA) return "PRICE HIDDEN";
+  if (p < B.barB) return "PRICE HIDDEN";
   if (p < B.fStampA) return "KIDDING";
   if (p < 0.51) return "STAMPED";
   if (p < B.turboB + 0.002) return "TURBO";
@@ -150,6 +152,8 @@ export class Engine {
   private torn: boolean | null = null;
   /** Resting font-stretch per overprint word (the title line sits narrower on phones). */
   private wordRest: number[] = WORDS.map(() => 150);
+  /** Screen band of each overprint word (set by the world from its layout). */
+  wordBands: { top: number; bottom: number }[] = [];
 
   constructor(public refs: Refs) {}
 
@@ -237,8 +241,9 @@ export class Engine {
     const flyT = range(p, B.flyA, B.flyB);
     const fly = easeInCubic(flyT);
     const gone = p >= B.flyB;
-    const gy = -30 * u * spring - H * 1.45 * fly;
-    const gz = 240 * u * easeInOutCubic(flyT);
+    // the torn receipt flies at the camera (up to 2x by perspective) as it lifts out of frame
+    const gy = -30 * u * spring - H * 1.05 * fly;
+    const gz = g.persp * 0.5 * easeInOutCubic(flyT);
     const gphi = -16 * easeInOutCubic(flyT);
     const grz = -7 * easeInOutCubic(flyT);
     const shake = jolt(p, B.sStampHit) + jolt(p, B.fStampHit, -1.4) + jolt(p, B.tagHit, 1.2) + jolt(p, B.tearA + 0.004, 1.8);
@@ -351,6 +356,9 @@ export class Engine {
       }
     }
 
+    // projected top edge of the paper (hy/hz end at row 0's free edge)
+    const paperTop = gone ? H : g.perspY + (hy - g.perspY) * (g.persp / (g.persp - hz));
+
     // ------------------------------------------------------------- overlays
     r.overlays.forEach((o, k) => {
       if (!o.el) return;
@@ -363,7 +371,7 @@ export class Engine {
     });
 
     // ------------------------------------------------------- 001 · SHIPPED
-    this.stamp(p, r.stampS, r.stampSShadow, r.stampSSpatter, B.sStampA, B.sStampHit, -7);
+    this.stamp(p, r.stampS, r.stampSShadow, r.stampSSpatter, B.sStampA, B.sStampHit, STAMP_LAND.s.tilt);
     // ---------------------------------------------- 002 · gift receipt gag
     if (r.ribbon) {
       const w = easeInOutCubic(range(p, B.ribbonA, B.ribbonB));
@@ -387,7 +395,7 @@ export class Engine {
       r.bar.style.transform = `translate(${(e * 240 * u).toFixed(1)}px, ${(-e * 18 * u).toFixed(1)}px) rotate(${(e * 14).toFixed(2)}deg)`;
       r.bar.style.opacity = String(1 - range(t, 0.55, 1));
     }
-    this.stamp(p, r.stampF, r.stampFShadow, r.stampFSpatter, B.fStampA, B.fStampHit, 5);
+    this.stamp(p, r.stampF, r.stampFShadow, r.stampFSpatter, B.fStampA, B.fStampHit, STAMP_LAND.f.tilt);
 
     // ------------------------------------------------- 003 · FOR SALE tag
     if (r.swingWrap) {
@@ -447,6 +455,8 @@ export class Engine {
     }
     if (r.stub) r.stub.style.opacity = p >= B.tearA ? "1" : "0";
     if (r.spec) r.spec.style.opacity = String(1 - range(p, B.panA, B.panB));
+    // phones: the touch hint lives on the tall title-card printer only (the band then pans into the HUD's row)
+    if (r.hint) r.hint.style.opacity = String(1 - range(p, B.panA, (B.panA + B.panB) / 2));
     const bottom = r.rows[IDX.bottom];
     const torn = p >= B.tearA;
     if (bottom && this.torn !== torn) {
@@ -473,7 +483,11 @@ export class Engine {
       if (!el) return;
       const inT = w.a < 0 ? 1 : range(p, w.a - 0.002, w.a + 0.014);
       const outT = range(p, w.b - 0.002, w.b + 0.012);
-      const op = Math.round(inT * (1 - outT) * 100) / 100;
+      // phones: the paper (84vw) hides most of a mid-film word and leaves slivers at its edges,
+      // so a word fades once the paper's top edge climbs from its bottom to its middle
+      const band = this.wordBands[k];
+      const hidden = g.mobile && k > 0 && k < WORDS.length - 1 && band ? smoothstep(range(band.bottom - paperTop, 0, (band.bottom - band.top) / 2)) : 0;
+      const op = Math.round(inT * (1 - outT) * (1 - hidden) * 100) / 100;
       const rest = this.wordRest[k];
       const st = Math.round(w.a < 0 ? lerp(rest, 50, outT) : lerp(50, rest, easeOutCubic(inT)) - (rest - 50) * outT);
       const sx = Math.round((1 + 0.07 * bell(inT, 0.35, 0.7, 0.75, 1)) * 1000) / 1000;

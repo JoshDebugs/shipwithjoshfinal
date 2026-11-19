@@ -35,8 +35,9 @@ function titleGeo(W: number, H: number) {
   const tagGap = 40 * k;
   const tagH = (stacked ? 42 : 40) * k;
   const total = y3 + tagGap + tagH;
-  const top = H / 2 - total / 2 + (stacked ? 0 : 6);
-  const left = W / 2 - blockW / 2;
+  // whole pixels, so the printed title lands on the pixel grid (crisp)
+  const top = Math.round(H / 2 - total / 2 + (stacked ? 0 : 6));
+  const left = Math.round(W / 2 - blockW / 2);
   const rings = contours(s1 / 150, RISO.cobalt, RISO.sun);
   const rx = stacked ? Math.min(W / 2 - 34 * k, blockW / 2 + 12 * k) : blockW / 2 + 150 * k;
   const ry = stacked ? total / 2 + 92 * k : total / 2 + 88 * k;
@@ -72,6 +73,7 @@ export function TitleAct({ rig }: { rig: Rig }) {
   }, [W, H, g.stacked, g.rx]);
 
   useTicker((t) => {
+    if (rig.p > BEAT.titleOut[1] + 0.04) return;
     const c = caret.current;
     if (c) c.style.opacity = t % 1.06 < 0.56 ? "1" : "0";
     // the reticle is really scanning: a hairline sweeps the subject tag
@@ -185,7 +187,9 @@ export function TitleAct({ rig }: { rig: Rig }) {
       {/* the question */}
       <div ref={wrap} className="pointer-events-none absolute" style={{ left: g.left, top: g.top, width: g.blockW, height: g.total, transformOrigin: "50% 42%", willChange: "transform, opacity" }}>
         <h2 className="sr-only">So what’s the pattern?</h2>
+        {/* printed once into a canvas: the portal dive zooms it every frame, which the live SVG can't keep up with */}
         <RidgedText
+          print
           width={g.blockW}
           height={g.y3}
           fill={RISO.paper}

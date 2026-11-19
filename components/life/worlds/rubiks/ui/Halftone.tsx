@@ -68,7 +68,8 @@ export function Halftone({ progress, store }: { progress: MotionValue<number>; s
     const wts = faceWeights(r);
     const R0 = screenRadius(r, H);
     const diag = Math.hypot(W, H);
-    const pitch = (stage.isMobile ? 11 : 15) * dpr;
+    // dot budget (§3.11): pitch sets the count (dpr-independent); phones / lowPower print a coarser screen
+    const pitch = (stage.lowPower ? 18 : 20) * dpr;
 
     const intro = smoothstep(range(p, 0.05, 0.17));
     const endFade = 1 - smoothstep(range(p, K.playEnd, K.poster2));
@@ -88,7 +89,7 @@ export function Halftone({ progress, store }: { progress: MotionValue<number>; s
     const ky0 = ko.y * dpr;
     const ky1 = (ko.y + ko.h) * dpr;
     const koOn = (1 - smoothstep(range(p, K.playEnd, 0.9))) * smoothstep(range(p, 0.2, 0.26));
-    const feather = (stage.isMobile ? 30 : 56) * dpr;
+    const feather = (stage.isMobile ? 40 : 90) * dpr;
     const r0 = R0 * 0.75 * dpr;
     const maxD = diag * 0.62 * dpr;
 
@@ -128,14 +129,21 @@ export function Halftone({ progress, store }: { progress: MotionValue<number>; s
 
     const solo = smoothstep(range(p, K.flipEnd - 0.02, K.flipEnd + 0.008));
 
-    // face floods
+    // face floods: at most the two strongest inks, and none too faint to matter (caps the dots per frame)
     if (base > 0.004) {
+      const floods: [FaceId, number][] = [];
       for (const f of FLOOD_FACES) {
         const wt = wts[f];
         // once the punchline is up the room settles on its one ink (three faces at once read as confetti)
         const k = base * Math.pow(wt, 2.2) * 1.35 * (f === "D" ? 1 + 0.5 * solo : 1 - solo);
-        if (k < 0.01) continue;
-        screen(FACE_INK[f].bg, SCREEN_ANGLE[f], (x, y) => k * spatial(x, y));
+        floods.push([f, k]);
+      }
+      floods.sort((a, b) => b[1] - a[1]);
+      // subtract the floor (the third ink, or a faint minimum) so an ink fades out instead of popping when it drops out
+      const floor = Math.max(0.04, floods[2]?.[1] ?? 0);
+      for (const [f, k0] of floods.slice(0, 2)) {
+        const k = k0 - floor;
+        if (k > 0.004) screen(FACE_INK[f].bg, SCREEN_ANGLE[f], (x, y) => k * spatial(x, y));
       }
     }
 

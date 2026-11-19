@@ -5,7 +5,7 @@
  * triangle and a handful of dust motes. The camera and every uniform come from
  * the rig, so the WebGL frame and the DOM overlays can never disagree.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   AdditiveBlending,
@@ -22,7 +22,7 @@ import { RISO } from "@/components/life/multiverse/palette";
 import { BAND_INKS, HAZE } from "./bands";
 import { RIDGE_H } from "./camera";
 import { CX, CY, PAIRS } from "./field";
-import { buildRidgeMesh } from "./mesh";
+import { loadRidgeMesh, readyRidgeMesh, type RidgeMesh } from "./mesh";
 import type { Rig } from "./rig";
 import { MOTE_FRAG, MOTE_VERT, SKY_FRAG, SKY_VERT, TERRAIN_FRAG, TERRAIN_VERT } from "./shaders";
 import { igniteAt, shaderState } from "./state";
@@ -46,13 +46,27 @@ function duskUniforms() {
 export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
   const { gl, scene, camera } = useThree();
 
-  const terrain = useMemo(() => {
-    const m = lowPower ? buildRidgeMesh(300, 5, 34) : buildRidgeMesh(620, 7, 36);
-    const g = new BufferGeometry();
-    g.setAttribute("position", new BufferAttribute(m.position, 3));
-    g.setIndex(new BufferAttribute(m.index, 1));
-    return g;
+  // the relief is built in idle slices (and cached), so mounting never freezes the
+  // world on screen; the sky and motes draw at once, the terrain the moment it is ready
+  const [mesh, setMesh] = useState<RidgeMesh | null>(() => readyRidgeMesh(lowPower));
+  useEffect(() => {
+    let live = true;
+    const hit = readyRidgeMesh(lowPower);
+    if (hit) setMesh(hit);
+    else loadRidgeMesh(lowPower).then((m) => live && setMesh(m));
+    return () => {
+      live = false;
+    };
   }, [lowPower]);
+
+  const terrain = useMemo(() => {
+    const g = new BufferGeometry();
+    if (mesh) {
+      g.setAttribute("position", new BufferAttribute(mesh.position, 3));
+      g.setIndex(new BufferAttribute(mesh.index, 1));
+    }
+    return g;
+  }, [mesh]);
 
   const terrainMat = useMemo(
     () =>
@@ -142,19 +156,30 @@ export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
     gl.compile(scene, camera);
   }, [gl, scene, camera, terrainMat, skyMat, moteMat]);
 
+  // test hook for the screenshot tooling: the relief is built and drawing
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" || !mesh) return;
+    const host = gl.domElement.parentElement;
+    const id = requestAnimationFrame(() => host?.setAttribute("data-outro-ready", "1"));
+    return () => {
+      cancelAnimationFrame(id);
+      host?.removeAttribute("data-outro-ready");
+    };
+  }, [gl, mesh]);
+
+  useEffect(() => () => terrain.dispose(), [terrain]);
   useEffect(
     () => () => {
-      terrain.dispose();
       skyGeo.dispose();
       motes.dispose();
       terrainMat.dispose();
       skyMat.dispose();
       moteMat.dispose();
     },
-    [terrain, skyGeo, motes, terrainMat, skyMat, moteMat],
+    [skyGeo, motes, terrainMat, skyMat, moteMat],
   );
 
-  const announced = useRef(false);
+  const glow = useRef(new Vector2());
 
   useFrame((state) => {
     const f = rig.frame;
@@ -176,9 +201,9 @@ export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
     }
     cam.updateMatrixWorld();
 
-    const glow = new Vector2(CX - f.x, CY - f.y);
-    if (glow.lengthSq() < 1e-6) glow.set(-Math.sin(f.yaw), Math.cos(f.yaw));
-    glow.normalize();
+    const g = glow.current.set(CX - f.x, CY - f.y);
+    if (g.lengthSq() < 1e-6) g.set(-Math.sin(f.yaw), Math.cos(f.yaw));
+    g.normalize();
 
     const s = shaderState(rig);
     const u = terrainMat.uniforms;
@@ -189,7 +214,7 @@ export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
     const climb = Math.min(1, Math.max(0, (f.z - 0.05) / 0.3));
     u.uFogK.value = 3.1 * (1 - 0.86 * climb);
     u.uCam.value.copy(cam.position);
-    u.uGlowDir.value.copy(glow);
+    u.uGlowDir.value.copy(g);
     u.uDim.value = s.dim;
     u.uScanY.value = s.scanY;
     u.uScanOn.value = s.scanOn;
@@ -202,7 +227,7 @@ export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
 
     const sky = skyMat.uniforms;
     sky.uDusk.value = f.dusk;
-    sky.uGlowDir.value.copy(glow);
+    sky.uGlowDir.value.copy(g);
     sky.uInvProj.value.copy(cam.projectionMatrixInverse);
     sky.uCamWorld.value.copy(cam.matrixWorld);
     sky.uDpr.value = state.gl.getPixelRatio();
@@ -212,16 +237,12 @@ export function Terrain({ rig, lowPower }: { rig: Rig; lowPower: boolean }) {
     mo.uDusk.value = f.dusk;
     mo.uCam.value.copy(cam.position);
     mo.uSize.value = state.size.height * state.gl.getPixelRatio() * 0.26;
-
-    if (!announced.current) {
-      announced.current = true;
-      gl.domElement.parentElement?.setAttribute("data-outro-ready", "1");
-    }
   });
 
   return (
     <>
       <mesh geometry={skyGeo} material={skyMat} frustumCulled={false} renderOrder={-10} />
+      {/* mounted from the start on an empty geometry, so its program compiles with the warm-up */}
       <mesh geometry={terrain} material={terrainMat} frustumCulled={false} />
       <points geometry={motes} material={moteMat} frustumCulled={false} renderOrder={5} />
     </>

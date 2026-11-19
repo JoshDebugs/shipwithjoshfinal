@@ -15,7 +15,7 @@ import { tearPolygon } from "./engine";
 import { computeGeo, type Geo } from "./geometry";
 import { BicepSticker, Bow, DotText } from "./glyphs";
 import { RowInk } from "./RowInk";
-import { IDX, ROWS } from "./rows";
+import { IDX, ROWS, STAMP_LAND } from "./rows";
 import { Stamp } from "./Stamp";
 import { tagLayout } from "./SwingTag";
 import { wordEm } from "./words";
@@ -57,8 +57,9 @@ export default function StartupsStatic() {
   const h = (id: string) => g.h[IDX[id]];
 
   // where each startup's ink "landed" (receipt-local coordinates)
-  const hitS = { x: rw * 0.55, y: y("s-stamp") + h("s-stamp") * 0.5 };
-  const hitF = { x: rw * 0.5, y: y("f-stamp") + h("f-stamp") * 0.5 + 5 * u };
+  const land = (k: "s" | "f") => ({ x: rw * STAMP_LAND[k].x, y: y(STAMP_LAND[k].row) + h(STAMP_LAND[k].row) * 0.5 + STAMP_LAND[k].dy * u });
+  const hitS = land("s");
+  const hitF = land("f");
   const tagRow = mobile ? "l-tag" : "l-name";
   const tag = tagLayout(g, h(tagRow));
   const hitL = mobile
@@ -80,8 +81,8 @@ export default function StartupsStatic() {
         { text: "VISIT AGAIN.", y: y("ty1") + h("ty1"), scale: 0.82 },
       ];
 
-  const stampS = rw * (mobile ? 0.56 : 0.5);
-  const stampF = rw * (mobile ? 0.54 : 0.48);
+  const stampS = rw * STAMP_LAND.s.w[mobile ? 1 : 0];
+  const stampF = rw * STAMP_LAND.f.w[mobile ? 1 : 0];
 
   return (
     <div className="relative overflow-hidden" style={{ background: C.room, color: C.paper }}>
@@ -197,7 +198,7 @@ export default function StartupsStatic() {
             {ROWS.map((row, i) => (
               <li
                 key={row.id}
-                aria-hidden={row.kind === "gap" || row.kind === "rule1" || row.kind === "rule2" || row.kind === "barcode" ? true : undefined}
+                aria-hidden={(row.kind === "gap" && !row.sr) || row.kind === "rule1" || row.kind === "rule2" || row.kind === "barcode" || row.kind === "digits" ? true : undefined}
                 className="relative"
                 style={{
                   height: g.h[i] + (i === ROWS.length - 1 ? 12 * u : 0),
@@ -219,7 +220,7 @@ export default function StartupsStatic() {
           />
 
           {/* 001 · SHIPPED */}
-          <Placed x={hitS.x} y={hitS.y} rotate={-6} blend>
+          <Placed x={hitS.x} y={hitS.y} rotate={STAMP_LAND.s.tilt} blend>
             <Stamp id="static-shipped" lines={["SHIPPED"]} color={C.cobalt} width={stampS} seed={4} />
           </Placed>
 
@@ -242,6 +243,7 @@ export default function StartupsStatic() {
             <Bow size={rw * (mobile ? 0.3 : 0.25)} />
           </Placed>
           <div
+            aria-hidden
             className="absolute flex items-center"
             style={{
               left: rw * (mobile ? 0.62 : 0.68),
@@ -288,10 +290,9 @@ export default function StartupsStatic() {
           >
             HIDDEN
           </div>
-          <p className="sr-only">Gift receipt: price hidden. Kidding: ₹42k in 3 months.</p>
 
           {/* 002 · LIVE + SOLD IRL */}
-          <Placed x={hitF.x} y={hitF.y} rotate={4} blend>
+          <Placed x={hitF.x} y={hitF.y} rotate={STAMP_LAND.f.tilt} blend>
             <Stamp id="static-sold" lines={["LIVE +", "SOLD IRL"]} label="Live + sold IRL" color={C.teal} width={stampF} seed={23} />
           </Placed>
 
@@ -361,7 +362,7 @@ function withScanRoom(g: Geo): Geo {
 /** Centre a child at (x, y) with a fixed tilt. */
 function Placed({ x, y, rotate, blend, children }: { x: number; y: number; rotate: number; blend?: boolean; children: ReactNode }) {
   return (
-    <div className="absolute" style={{ left: x, top: y, transform: `translate(-50%, -50%) rotate(${rotate}deg)`, mixBlendMode: blend ? "multiply" : undefined }}>
+    <div aria-hidden className="absolute" style={{ left: x, top: y, transform: `translate(-50%, -50%) rotate(${rotate}deg)`, mixBlendMode: blend ? "multiply" : undefined }}>
       {children}
     </div>
   );
@@ -372,7 +373,7 @@ function StaticTag({ g, top, tag }: { g: Geo; top: number; tag: ReturnType<typeo
   const { hole, pivot, w, h, str } = tag;
   const swing = g.mobile ? -5 : 7;
   return (
-    <div className="absolute left-0" style={{ top, width: 0, height: 0 }}>
+    <div aria-hidden className="absolute left-0" style={{ top, width: 0, height: 0 }}>
       <span
         aria-hidden
         className="absolute rounded-full"

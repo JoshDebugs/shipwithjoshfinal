@@ -99,6 +99,8 @@ function laptopBox(f: Framing, asp: number, W: number, H: number, size: number, 
   return { u, top, size: uEnd - u };
 }
 
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+
 export function makeRig(W: number, H: number): Rig {
   const asp = W / H;
   const mobile = asp < 0.8;
@@ -110,8 +112,12 @@ export function makeRig(W: number, H: number): Rig {
     const exit: Framing = { D: 9.0, yc: 1.45, sx: 0, sy: -0.25 };
     const jee = glyphBox(title, asp, -0.82, 0.82, -0.03, 0.34, JEE_X);
     const iit = glyphBox(a, asp, -0.78, 0.78, -0.62, 0.42, IIT_X);
-    const size = W * 0.86;
+    // On a wider portrait stage (tablets) the icon is capped by height, so its base
+    // trapezoid always clears the top of the pile (which sits at a fixed share of H).
+    const size = Math.min(W * 0.86, H * 0.4);
     const laptop = laptopBox(exit, asp, W, H, size, (W - size) / 2, H * 0.31);
+    // tablets see more of the desk on each side: stand the lamp beside the pile, not over it
+    const wide = clamp01((asp - 0.5) / 0.25);
     return {
       W,
       H,
@@ -128,7 +134,15 @@ export function makeRig(W: number, H: number): Rig {
       lampB: 81 * DEG,
       lampR: 3.3,
       lampH: 0.82,
-      model: { r: 1.5, rA: 1.5, rTitle: 2.4, phiA: -32 * DEG, phiRelit: -24 * DEG, phiB: -32 * DEG, scale: 0.46 },
+      model: {
+        r: 1.5 + 0.22 * wide,
+        rA: 1.5 + 0.22 * wide,
+        rTitle: 2.4,
+        phiA: (-32 - 16 * wide) * DEG,
+        phiRelit: (-24 - 14 * wide) * DEG,
+        phiB: (-32 - 16 * wide) * DEG,
+        scale: 0.46,
+      },
       win: windowBox(a, asp, 0.44, 0.84, 0.5, 0.72),
       poolA: [0, 2.3],
       poolB: [laptop.u + laptop.size / 2, 2.3],

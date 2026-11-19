@@ -32,7 +32,9 @@ export default function RubiksStatic() {
   const [state, setState] = useState<CubeState>(() => solved());
   const [moves, setMoves] = useState(0);
   const mobile = stage.isMobile;
-  const cubeSize = mobile ? Math.min(stage.width - 40, 340) : 460;
+  // two columns only where both fit (the 64px headline + a 460 cube need ~1180); else stack and centre the figure
+  const twoCol = stage.width >= 1180;
+  const cubeSize = twoCol ? 460 : Math.min(Math.max(200, stage.width - 40), mobile ? 340 : 420);
 
   const button: React.CSSProperties = {
     fontFamily: "var(--f-tilt-warp)",
@@ -52,12 +54,12 @@ export default function RubiksStatic() {
           backgroundSize: mobile ? "56px 56px" : "96px 96px",
         }}
       />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-[1fr_auto] md:gap-16">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 md:gap-16" style={{ gridTemplateColumns: twoCol ? "1fr auto" : "minmax(0, 1fr)" }}>
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: alpha(RISO.ink, 0.62) }}>
             World 03 — Rubik&apos;s — Age 14 — Face Value
           </p>
-          <h2 className="mt-3 uppercase" style={{ fontFamily: "var(--f-rubik-mono)", fontSize: mobile ? 34 : 64, lineHeight: 1 }}>
+          <h2 className="mt-3 uppercase" style={{ fontFamily: "var(--f-rubik-mono)", fontSize: mobile ? 34 : 64, lineHeight: 1, wordSpacing: "-0.28em" }}>
             {COPY.headline}
           </h2>
           <ol className="mt-8 flex flex-col">
@@ -86,7 +88,7 @@ export default function RubiksStatic() {
           </div>
         </div>
 
-        <figure className="flex flex-col items-center gap-5">
+        <figure className="flex flex-col items-center gap-5 justify-self-center">
           <IsoCube state={state} size={cubeSize} idPrefix="st" title="A solved cube printed with the copy: Scrambled at age 14, world 03; 7+ cubes, different puzzle types; time spent: way too much; going too deep." />
           <figcaption className="flex flex-col items-center gap-3 text-center">
             <p style={{ fontFamily: "var(--f-tilt-warp)", fontSize: mobile ? 20 : 24 }}>{COPY.play}</p>

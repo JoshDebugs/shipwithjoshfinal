@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import type { MotionValue } from "framer-motion";
-import { useProgress } from "@/components/life/multiverse/runtime";
+import { useIsoLayoutEffect, useProgress } from "@/components/life/multiverse/runtime";
 import { RISO, alpha, overprint } from "@/components/life/multiverse/palette";
 import { backOut, clamp, easeOutCubic, hash, lerp, range } from "@/components/life/multiverse/ease";
 import { COPY, PAPER, PAPER_SUMMARY } from "./copy";
@@ -60,7 +60,7 @@ export function PositionPaper({ L, progress }: { L: Layout; progress: MotionValu
   const pr = useMemo(newProj, []);
   const { w, h, fs, pad } = L.paper;
 
-  useProgress(progress, (p) => {
+  const apply = (p: number) => {
     const wrap = wrapRef.current;
     const sheet = sheetRef.current;
     if (!wrap || !sheet) return;
@@ -121,7 +121,11 @@ export function PositionPaper({ L, progress }: { L: Layout; progress: MotionValu
       mark.style.strokeDashoffset = String(1 - m);
       mark.style.opacity = m > 0 ? "1" : "0";
     }
-  });
+  };
+  useProgress(progress, apply);
+  // a resize changes the layout without moving progress: re-apply at once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useIsoLayoutEffect(() => apply(progress.get()), [L]);
 
   const labelInk = RISO.pink;
   const barStyle = (i: number): React.CSSProperties => ({

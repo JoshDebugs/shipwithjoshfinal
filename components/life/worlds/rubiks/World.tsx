@@ -19,7 +19,6 @@ import { useMotionValue } from "framer-motion";
 import { LazyCanvas } from "@/components/life/multiverse/LazyCanvas";
 import { useProgress, useStage, useTicker } from "@/components/life/multiverse/runtime";
 import { RISO } from "@/components/life/multiverse/palette";
-import { range } from "@/components/life/multiverse/ease";
 import type { WorldProps } from "@/components/life/multiverse/types";
 import { COPY, VERMILION } from "./lib/script";
 import { K, movePos } from "./lib/rig";
@@ -28,21 +27,29 @@ import { CAP_FALLBACK, measureCap } from "./lib/print";
 import { createStore } from "./lib/store";
 import { Halftone } from "./ui/Halftone";
 import { Poster } from "./ui/Poster";
-import { Lcd } from "./ui/Lcd";
+import { Lcd, NOISE } from "./ui/Lcd";
 import { Ticker } from "./ui/Ticker";
 import { Captions } from "./ui/Captions";
 import { FreePlay } from "./ui/FreePlay";
 import { Exit } from "./ui/Exit";
 import { Fallback } from "./ui/Fallback";
 
-const Scene = dynamic(() => import("./scene/Scene"), { ssr: false, loading: () => null });
+const loadScene = () => import("./scene/Scene");
+const Scene = dynamic(loadScene, { ssr: false, loading: () => null });
 
 const pad2 = (n: number) => String(Math.max(0, Math.min(99, Math.round(n)))).padStart(2, "0");
-const clock = (secs: number) => {
-  const s = Math.min(599.99, secs);
-  const m = Math.floor(s / 60);
-  const r = s - m * 60;
-  return `${m}:${r.toFixed(2).padStart(5, "0")}`;
+const hash = (n: number) => {
+  let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b);
+  x ^= x >>> 13;
+  x = Math.imul(x, 0xc2b2ae35);
+  return (x ^ (x >>> 16)) >>> 0;
+};
+/** The solve "clock": seven cells of segment noise, re-rolled ~20× a second and by scroll. No time is ever legible. */
+const churn = (p: number) => {
+  const f = Math.floor(performance.now() / 50) + Math.floor(p * 4000) * 7;
+  let s = "";
+  for (let c = 0; c < 7; c++) s += NOISE[hash(f * 31 + c * 977) % NOISE.length];
+  return s;
 };
 
 export default function RubiksWorld({ progress }: WorldProps) {
@@ -60,6 +67,11 @@ export default function RubiksWorld({ progress }: WorldProps) {
     };
   }, [store]);
   const [cap, setCap] = useState(CAP_FALLBACK);
+
+  // fetch the scene's code now, alongside three.js, instead of only once the canvas exists
+  useEffect(() => {
+    void loadScene();
+  }, []);
 
   // the atlas needs the real Rubik Mono One: print with the fallback if it is slow, reprint once it lands
   useEffect(() => {
@@ -84,21 +96,18 @@ export default function RubiksWorld({ progress }: WorldProps) {
   }, []);
 
   /* ------------------------------------------------ LCD + lock shockwaves */
-  const lcdText = useMotionValue("INSPECT   15");
+  const lcdText = useMotionValue("INSPECT   14");
   const lcdLabel = useMotionValue("inspection");
   const prev = useRef(progress.get());
-  const solveClock = useRef(0);
   const live = useRef<HTMLParagraphElement>(null);
 
   const lcdFor = (p: number) => {
-    if (p < 0.036) return [`INSPECT   ${p < 0.018 ? 15 : 14}`, "inspection"];
+    // rests on 14 beside the title's "AT AGE 14"
+    if (p < 0.036) return ["INSPECT   14", "inspection"];
     if (p < K.turn) return ["   AGE 14", "inspection · done"];
     if (p < K.scramble) return [`SCRAMBLE  ${pad2(Math.floor(movePos(p)) + 1)}`, "scramble"];
     if (p < K.solve) return ["SCRAMBLED 14", "scramble"];
-    if (p < K.lock2) {
-      const t = range(p, K.solve, K.lock2);
-      return [`TIME ${clock(2.4 + 560 * Math.pow(t, 2.3) + solveClock.current)}`, "solve"];
-    }
+    if (p < K.lock2) return [`TIME ${churn(p)}`, "solve · counting"];
     if (p < K.flipEnd) return ["WAY TOO MUCH", "solve · overflow"];
     if (p < K.playEnd) return store.moves.length ? [`MOVES     ${pad2(store.moves.length)}`, "free play"] : ["  I'LL WAIT.", "free play"];
     if (p < K.poster2) return [`UNDO      ${pad2(Math.ceil(store.applied))}`, "free play"];
@@ -114,7 +123,6 @@ export default function RubiksWorld({ progress }: WorldProps) {
   useProgress(progress, (p) => {
     const before = prev.current;
     prev.current = p;
-    if (p < K.solve) solveClock.current = 0;
     // forward crossings fire a shockwave + a scale "press" (never on big jumps)
     if (p > before && p - before < 0.08) {
       const now = performance.now() / 1000;
@@ -136,11 +144,7 @@ export default function RubiksWorld({ progress }: WorldProps) {
     refresh(p);
   });
 
-  useTicker((_, dt) => {
-    const p = progress.get();
-    if (p > K.solve && p < K.lock2) solveClock.current += dt;
-    refresh(p);
-  });
+  useTicker(() => refresh(progress.get()));
 
   const fr = frame(stage.width, stage.height);
   const lcdH = Math.round(24 * fr.lcd.scale);
@@ -150,6 +154,7 @@ export default function RubiksWorld({ progress }: WorldProps) {
       <Halftone progress={progress} store={store} />
 
       <LazyCanvas
+        keep
         shadows="percentage"
         flat
         camera={{ fov: 8, near: 0.05, far: 200, position: [0, 30, 0.001] }}
@@ -158,6 +163,8 @@ export default function RubiksWorld({ progress }: WorldProps) {
       >
         <Scene progress={progress} store={store} font={font?.fam ?? null} fontReal={font?.real ?? false} cap={cap} lowPower={stage.lowPower} />
       </LazyCanvas>
+      {/* stands in until the WebGL cube is ready (a cold arrival), then steps aside */}
+      <Fallback progress={progress} store={store} cap={cap} interim />
 
       <Poster progress={progress} store={store} cap={cap} />
 
@@ -173,6 +180,8 @@ export default function RubiksWorld({ progress }: WorldProps) {
 
       <div aria-hidden className="riso-grain" style={{ zIndex: 8, opacity: 0.16 }} />
 
+      {/* the single reading source: every visible copy layer is aria-hidden */}
+      <h2 className="sr-only">Scrambled at age 14. World 03.</h2>
       <p ref={live} className="sr-only" aria-live="polite" />
       <ol className="sr-only">
         <li>{COPY.headline}</li>

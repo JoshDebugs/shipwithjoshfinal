@@ -56,7 +56,7 @@ function text(el: HTMLElement | null, s: string) {
 export default function AnchoringWorld({ progress }: WorldProps) {
   const stage = useStage();
   const origin = usePortalOrigin();
-  const L = useMemo(() => computeLayout(stage.width, stage.height, stage.isMobile), [stage.width, stage.height, stage.isMobile]);
+  const L = useMemo(() => computeLayout(stage.width, stage.height, stage.isMobile, stage.lowPower), [stage.width, stage.height, stage.isMobile, stage.lowPower]);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   /* ------------------------------------------------------------ refs */
@@ -288,16 +288,20 @@ export default function AnchoringWorld({ progress }: WorldProps) {
     /* console: meter bridge + slug */
     const consoleIn = easeOutCubic(range(p, T.consoleIn[0], T.consoleIn[1]));
     // phones dock the console at the top, where the knob lands at the exit: clear it first
+    // (desktop keeps the meter in the exit composition, per the spec's "knob / VU / 11" ending)
     const consoleOut = L.mobile ? range(p, 0.84, 0.868) : 0;
-    css(vu.root.current, "transform", `translate3d(${px(L.vu.x - (1 - consoleIn) * 24)}, ${px(L.vu.y - consoleOut * 16)}, 0)`);
+    const outDy = -16 * consoleOut;
+    css(vu.root.current, "transform", `translate3d(${px(L.vu.x - (1 - consoleIn) * 24)}, ${px(L.vu.y + outDy)}, 0)`);
     fade(vu.root.current, consoleIn * (1 - consoleOut));
-    css(panel.current, "transform", `translate3d(${px(-(1 - consoleIn) * 24)}, ${px(-consoleOut * 16)}, 0)`);
+    css(panel.current, "transform", `translate3d(${px(-(1 - consoleIn) * 24)}, ${px(outDy)}, 0)`);
     fade(panel.current, consoleIn * (1 - consoleOut));
     fade(slug.root.current, L.mobile ? consoleIn * (1 - consoleOut) : 1);
     if (L.slug.titleX !== null) {
       // centred under the whisper on the title card, then it slides over to dock in the panel
       const away = 1 - easeInOutCubic(range(p, T.slugDock[0], T.slugDock[1]));
       css(slug.root.current, "transform", `translateX(${px(away * (L.slug.titleX - L.slug.x))}) translateX(${(away * -50).toFixed(2)}%)`);
+    } else {
+      css(slug.root.current, "transform", "none");
     }
     let level = vuLit(vol) + v * (1.1 * kick0 - 0.55) + grind * (hash(Math.floor(time * 17)) > 0.45 ? 1.3 : -0.4) + thump * 3;
     if (p >= T.clip) level = lerp(12, 10.2 + 1.1 * kick0, hum);
@@ -442,7 +446,7 @@ export default function AnchoringWorld({ progress }: WorldProps) {
     const c = canvasRef.current;
     if (!c || !L.W || !L.H) return;
     const dpr = Math.min(window.devicePixelRatio || 1, stage.lowPower ? 1.25 : 1.6);
-    pressRef.current = new PrintCanvas(c, L.W, L.H, dpr, L.cells, L.mobile ? 4 : 3);
+    pressRef.current = new PrintCanvas(c, L.W, L.H, dpr, L.cells, L.mobile || stage.lowPower ? 4 : 3);
     quant.current.opener = -1;
     drawRef.current(progress.get(), gsap.ticker.time);
     return () => {
@@ -511,6 +515,7 @@ export default function AnchoringWorld({ progress }: WorldProps) {
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden" style={{ background: RISO.paper, color: RISO.ink }}>
+      <h2 className="sr-only">{COPY.headline}</h2>
       <canvas ref={canvasRef} aria-hidden className="absolute left-0 top-0" />
 
       <Cone refs={cone0} size={L.cones[0].r * 2} />
@@ -521,6 +526,21 @@ export default function AnchoringWorld({ progress }: WorldProps) {
       <RegMark x={W - inset} y={inset} />
       <RegMark x={inset} y={H - inset} />
 
+      {/* feedback rings print under the console, so the readout stays clean */}
+      <svg aria-hidden className="pointer-events-none absolute inset-0" width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <circle
+            key={i}
+            ref={(el) => {
+              rings.current[i] = el;
+            }}
+            r={0}
+            fill="none"
+            stroke={RING_INKS[i % 4]}
+            style={{ opacity: 0, visibility: "hidden", mixBlendMode: "multiply" }}
+          />
+        ))}
+      </svg>
       <div
         ref={panel}
         aria-hidden
@@ -543,20 +563,6 @@ export default function AnchoringWorld({ progress }: WorldProps) {
         <Slug refs={slug} fontSize={L.type.mono} compact={L.mobile} />
       </div>
 
-      <svg aria-hidden className="pointer-events-none absolute inset-0" width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-        {Array.from({ length: 8 }, (_, i) => (
-          <circle
-            key={i}
-            ref={(el) => {
-              rings.current[i] = el;
-            }}
-            r={0}
-            fill="none"
-            stroke={RING_INKS[i % 4]}
-            style={{ opacity: 0, visibility: "hidden", mixBlendMode: "multiply" }}
-          />
-        ))}
-      </svg>
 
       {/* title card */}
       <div
@@ -628,8 +634,8 @@ export default function AnchoringWorld({ progress }: WorldProps) {
             border: `1px solid ${RISO.ink}`,
             boxShadow: `3px 3px 0 ${RISO.ink}`,
           }}
-          aria-label={COPY.age}
         >
+          <span className="sr-only">{COPY.age}</span>
           <span ref={ageTyped} aria-hidden />
           <span ref={ageCaret} aria-hidden className="inline-block" style={{ width: "0.6em", height: "1.05em", background: RISO.ink, marginLeft: 2 }} />
           <span ref={ageRest} aria-hidden style={{ color: "transparent" }}>

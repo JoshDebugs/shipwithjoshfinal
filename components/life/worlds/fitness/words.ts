@@ -27,8 +27,21 @@ export async function loadHeatFont(family: string): Promise<boolean> {
 
 type Row = { text: string; size: number; cap: number; y: number };
 
+type Layout = {
+  w: number;
+  cy: number;
+  gap: number;
+  maxH: number;
+  sy: number;
+  /** Anchor the last baseline here instead of centring on cy. */
+  bottom?: number;
+  /** Split the block around a horizontal band (see Geo.wall.split). */
+  split?: { after: number; y: number; gap: number; top: number };
+};
+
 /** Justified block: every line fit to width `w`, stacked with `gap`, centred on `cy`. */
-function blockRows(ctx: CanvasRenderingContext2D, family: string, lines: readonly string[], w: number, cy: number, gap: number, maxH: number, sy: number): Row[] {
+function blockRows(ctx: CanvasRenderingContext2D, family: string, lines: readonly string[], L: Layout): Row[] {
+  const { w, cy, gap, maxH, sy, bottom, split } = L;
   const rows: Row[] = lines.map((text) => {
     ctx.font = `900 100px ${family}`;
     const m = ctx.measureText(text);
@@ -36,15 +49,38 @@ function blockRows(ctx: CanvasRenderingContext2D, family: string, lines: readonl
     const cap = ctx.measureText("H").actualBoundingBoxAscent * (size / 100) * sy;
     return { text, size, cap, y: 0 };
   });
-  const total = () => rows.reduce((s, r) => s + r.cap, 0) + gap * (rows.length - 1);
-  if (total() > maxH) {
-    const k = (maxH - gap * (rows.length - 1)) / rows.reduce((s, r) => s + r.cap, 0);
+  const scaleAll = (k: number) => {
     for (const r of rows) {
       r.size *= k;
       r.cap *= k;
     }
+  };
+  const sum = (rs: Row[]) => rs.reduce((s, r) => s + r.cap, 0) + gap * Math.max(0, rs.length - 1);
+  const total = () => sum(rows);
+  if (total() > maxH) scaleAll((maxH - gap * (rows.length - 1)) / rows.reduce((s, r) => s + r.cap, 0));
+
+  if (split) {
+    const above = rows.slice(0, split.after);
+    const below = rows.slice(split.after);
+    const room = split.y - split.gap / 2 - split.top;
+    const hAbove = sum(above);
+    if (hAbove > room && room > 0) scaleAll((room - gap * (above.length - 1)) / above.reduce((s, r) => s + r.cap, 0));
+    let y = split.y - split.gap / 2 - sum(above);
+    for (const r of above) {
+      y += r.cap;
+      r.y = y;
+      y += gap;
+    }
+    y = split.y + split.gap / 2;
+    for (const r of below) {
+      y += r.cap;
+      r.y = y;
+      y += gap;
+    }
+    return rows;
   }
-  let y = cy - total() / 2;
+
+  let y = bottom !== undefined ? bottom - total() : cy - total() / 2;
   for (const r of rows) {
     y += r.cap;
     r.y = y;
@@ -67,8 +103,8 @@ export function buildWordMasks(g: Geo, family: string, scale: number): WordMasks
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "center";
 
-  const head = blockRows(ctx, family, g.headline.lines, g.headline.w, g.headline.cy, g.headline.gap, g.H * 0.6, 1);
-  const wall = blockRows(ctx, family, WALL_WORDS, g.wall.w, g.wall.cy, g.wall.gap, g.wall.maxH, g.wall.sy);
+  const head = blockRows(ctx, family, g.headline.lines, { ...g.headline, sy: 1 });
+  const wall = blockRows(ctx, family, WALL_WORDS, g.wall);
   const layers: { rows: Row[]; sy: number }[] = [
     { rows: head, sy: 1 },
     ...wall.map((r) => ({ rows: [r], sy: g.wall.sy })),

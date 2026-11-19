@@ -1,8 +1,8 @@
 "use client";
 
-// Dev-only isolated lab for the sports world (imports only this world). See components/life/multiverse/WorldLab.tsx.
+// Dev-only isolated lab for the sports world (imports only this world). See components/life/multiverse/SingleWorldLab.tsx.
 import { notFound } from "next/navigation";
-import { SingleWorldLab } from "@/components/life/multiverse/WorldLab";
+import { SingleWorldLab } from "@/components/life/multiverse/SingleWorldLab";
 import { RISO } from "@/components/life/multiverse/palette";
 import { world } from "@/components/life/worlds/sports";
 

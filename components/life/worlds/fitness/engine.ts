@@ -257,7 +257,9 @@ export class Engine {
       const x = g.cx + F.joints[J.chest * 2] * g.fh;
       const y = g.floorY - F.joints[J.chest * 2 + 1] * g.fh;
       h.reticle.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-      // on a white-hot chest the marks flip to ink, or they vanish
+      // the title card stays clean: the reticle locks on once the headline starts to cool
+      h.reticle.style.opacity = easeInOutSine(range(p, 0.07, 0.105)).toFixed(3);
+      // on a white-hot chest the marks flip to ink, or they vanish (the reading keeps its own chip)
       const hot = F.chestT > 0.74 ? 1 : 0;
       if (hot !== this.lastHot) {
         h.reticle.style.color = hot ? C.ink : C.paper;

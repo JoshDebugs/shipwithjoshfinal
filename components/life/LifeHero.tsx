@@ -1,8 +1,21 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, MotionValue } from "framer-motion";
 import { useLenis } from "lenis/react";
+import { introDone } from "@/lib/intro";
+import { GistBloom } from "./GistBloom";
+
+/**
+ * Entrance timing. A first visit opens under the site's intro overlay (~2.7 s), so the
+ * entrance is staged to land as it opens. Arriving from another page there is no
+ * overlay: the same entrance plays at once, compressed, instead of a bare grid for
+ * 1.2 s while it waits.
+ */
+const ENTRANCE = {
+  intro: { meta: 0.5, stagger: 0.15, title: 1.2, titleStep: 0, titleSpring: { stiffness: 70, damping: 20 }, shape: 0.8, shapeStep: 0.2, shapeIn: 2 },
+  arrive: { meta: 0.05, stagger: 0.08, title: 0, titleStep: 0.04, titleSpring: { stiffness: 150, damping: 24 }, shape: 0.05, shapeStep: 0.05, shapeIn: 0.8 },
+};
 
 
 type Segment = { 
@@ -77,6 +90,9 @@ function ScrollTypewriter({
 }
 
 export function LifeHero() {
+  const [t] = useState(() => (introDone() ? ENTRANCE.arrive : ENTRANCE.intro));
+  /** Opacity + scale entrance of floating shape `i`; its idle drift is unchanged. */
+  const shapeIn = (i: number) => ({ duration: t.shapeIn, delay: t.shape + i * t.shapeStep });
 
   const constraintsRef = useRef(null);
 
@@ -87,7 +103,10 @@ export function LifeHero() {
     if (!sectionRef.current) return;
     const rect = sectionRef.current.getBoundingClientRect();
     const startScroll = -rect.top;
-    const maxScroll = rect.height - window.innerHeight;
+    // The animation plays over the first 200vh of scroll. The section is taller
+    // than that so its final frame ("Here's the gist of it.") stays pinned while
+    // the life film's first portal opens out of the full stop (see Multiverse).
+    const maxScroll = window.innerHeight * 2;
     if (maxScroll > 0) {
       let progress = startScroll / maxScroll;
       progress = Math.max(0, Math.min(1, progress));
@@ -112,7 +131,7 @@ export function LifeHero() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.5 },
+      transition: { staggerChildren: t.stagger, delayChildren: t.meta },
     },
   };
 
@@ -127,16 +146,18 @@ export function LifeHero() {
 
   const largeTextVars = {
     hidden: { opacity: 0, y: 40, filter: "blur(10px)" },
-    show: { 
-      opacity: 1, 
-      y: 0, 
+    show: (i: number) => ({
+      opacity: 1,
+      y: 0,
       filter: "blur(0px)",
-      transition: { type: "spring", stiffness: 70, damping: 20, delay: 1.2 }
-    }
+      transition: { type: "spring", ...t.titleSpring, delay: t.title + i * t.titleStep }
+    })
   };
 
   return (
-    <section ref={sectionRef} className="relative w-full h-[300vh]">
+    // 440vh = 200vh of animation + the 100vh stage + 140vh holding the final frame
+    // under the life film's first portal (HERO_HOLD_VH in Multiverse.tsx).
+    <section ref={sectionRef} className="relative w-full h-[440vh]">
       <div className="sticky top-0 w-full h-screen overflow-hidden bg-bg">
         {/* Grid background — same pattern as the home hero */}
         <div className="grid-bg absolute inset-0 opacity-40 z-0" aria-hidden />
@@ -171,14 +192,7 @@ export function LifeHero() {
             style={{ opacity: p2Opacity, scale: p2Scale, filter: p2Filter }}
             className="absolute inset-0 flex items-center justify-center px-6 md:px-12 pb-[8vh]"
           >
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-sans tracking-tight leading-tight font-medium text-center max-w-4xl text-fg">
-              <ScrollTypewriter 
-                progress={scrollProgress} 
-                segments={[{ text: "Here's the gist of it." }]}
-                typeStart={0.7} 
-                typeEnd={0.85} 
-              />
-            </h2>
+            <GistBloom progress={scrollProgress} typeStart={0.7} typeEnd={0.85} />
           </motion.div>
         </motion.div>
 
@@ -219,8 +233,8 @@ export function LifeHero() {
             rotate: [-15, 5, -5, 10, -15] 
           }}
           transition={{ 
-            opacity: { duration: 2, delay: 0.8 },
-            scale: { duration: 2, delay: 0.8, type: "spring" },
+            opacity: shapeIn(0),
+            scale: { ...shapeIn(0), type: "spring" },
             x: { duration: 15, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             y: { duration: 18, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             rotate: { duration: 20, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
@@ -246,8 +260,8 @@ export function LifeHero() {
             y: [0, 20, -10, 15, 0] 
           }}
           transition={{ 
-            opacity: { duration: 2, delay: 1 },
-            scale: { duration: 2, delay: 1, type: "spring" },
+            opacity: shapeIn(1),
+            scale: { ...shapeIn(1), type: "spring" },
             x: { duration: 17, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             y: { duration: 19, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
           }}
@@ -273,8 +287,8 @@ export function LifeHero() {
             rotate: [10, -5, 15, 0, 10]
           }}
           transition={{ 
-            opacity: { duration: 2, delay: 1.2 },
-            scale: { duration: 2, delay: 1.2, type: "spring" },
+            opacity: shapeIn(2),
+            scale: { ...shapeIn(2), type: "spring" },
             x: { duration: 16, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             y: { duration: 21, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             rotate: { duration: 22, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
@@ -301,8 +315,8 @@ export function LifeHero() {
             rotate: [0, 20, -10, 15, 0]
           }}
           transition={{ 
-            opacity: { duration: 2, delay: 1.4 },
-            scale: { duration: 2, delay: 1.4, type: "spring" },
+            opacity: shapeIn(3),
+            scale: { ...shapeIn(3), type: "spring" },
             x: { duration: 18, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             y: { duration: 16, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             rotate: { duration: 25, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
@@ -329,8 +343,8 @@ export function LifeHero() {
             rotate: [-10, 15, -5, 20, -10]
           }}
           transition={{ 
-            opacity: { duration: 2, delay: 1.6 },
-            scale: { duration: 2, delay: 1.6, type: "spring" },
+            opacity: shapeIn(4),
+            scale: { ...shapeIn(4), type: "spring" },
             x: { duration: 19, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             y: { duration: 17, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
             rotate: { duration: 24, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
@@ -368,7 +382,6 @@ export function LifeHero() {
               custom={i}
               initial="hidden"
               animate="show"
-              transition={{ delay: 1.2 + (i * 0.1) }}
               className="text-[15vw] md:text-[12vw] font-bold leading-none tracking-tighter text-white"
             >
               {word}
@@ -381,7 +394,6 @@ export function LifeHero() {
         variants={containerVars}
         initial="hidden"
         animate="show"
-        transition={{ delayChildren: 3 }}
         className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full items-end pb-24 md:pb-12 pt-8 relative z-40 pointer-events-none"
       >
         <motion.div variants={itemVars} className="text-xl md:text-2xl font-medium tracking-tight">

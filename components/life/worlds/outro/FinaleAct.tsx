@@ -14,6 +14,8 @@ import { useStage } from "@/components/life/multiverse/runtime";
 import { BEAT } from "./beats";
 import { docks, printToStage } from "./camera";
 import { BACK, CURRENTLY, NEXT, STORY } from "./copy";
+import { CX, CY } from "./field";
+import { svgAdvance, usePathPrint } from "./pathPrint";
 import { fade, place, windowed } from "./fx";
 import { BIG, MONO, SERIF, desk, isStacked, phone } from "./layout";
 import type { Rig } from "./rig";
@@ -45,8 +47,9 @@ function geo(W: number, H: number) {
   const yearSize = (stacked ? 54 : 66) * k;
   const nextY = stacked ? copyTop : copyTop + yearSize + itemsSize * 2.5 + 26 * k;
   const nextHead = (stacked ? 30 : 34) * k;
-  // on a phone the two longest goals take two lines
-  const rowHs = NEXT.map((n) => (stacked ? (n.length > 32 ? 66 : 39) : 48) * k);
+  // on a phone the two longest goals take two lines (a portrait tablet sets them on one)
+  const twoLines = (n: string) => n.length > 32 && n.length * 28 * k * 0.45 > width - 22 * k;
+  const rowHs = NEXT.map((n) => (stacked ? (twoLines(n) ? 66 : 39) : 48) * k);
   const rowsTop = nextY + nextHead + (stacked ? 10 : 14) * k;
   const rowMid = (i: number) => rowsTop + rowHs.slice(0, i).reduce((a, b) => a + b, 0) + rowHs[i] / 2;
   const rowsH = rowHs.reduce((a, b) => a + b, 0);
@@ -91,6 +94,8 @@ function geo(W: number, H: number) {
 
 /** The live edge's own legend, set just outside the sun ridge. */
 const EDGE_TEXT = `2026 · CURRENTLY · ${CURRENTLY.join(" · ").toUpperCase()} · `;
+/** Degrees of the print the legend runs around. */
+const EDGE_SPAN = 340;
 
 export function FinaleAct({ rig }: { rig: Rig }) {
   const stage = useStage();
@@ -101,8 +106,9 @@ export function FinaleAct({ rig }: { rig: Rig }) {
 
   const edge = useMemo(() => {
     // clockwise so it reads like a seal; the reveal below runs from its far end, with the pen
-    const pts = crestLine(24.6, penRestDeg(stacked) - 6 + 360, 340, 480);
-    return { d: pathD(pts), maskD: pathD(pts) };
+    const start = penRestDeg(stacked) - 6 + 360;
+    const pts = crestLine(24.6, start, EDGE_SPAN, 480);
+    return { pts, d: pathD(pts), from: start - EDGE_SPAN };
   }, [stacked]);
 
   const current = useRef<HTMLDivElement>(null);
@@ -114,8 +120,29 @@ export function FinaleAct({ rig }: { rig: Rig }) {
   const story = useRef<HTMLParagraphElement>(null);
   const pen = useRef<SVGPathElement>(null);
   const cta = useRef<HTMLDivElement>(null);
+  const edgeWrap = useRef<HTMLDivElement>(null);
+  const edgeLayer = useRef<HTMLDivElement>(null);
   const edgeSvg = useRef<SVGSVGElement>(null);
-  const edgeMask = useRef<SVGPathElement>(null);
+  const edgeCanvas = useRef<HTMLCanvasElement>(null);
+
+  // The legend, printed into a canvas once its face is in (the SVG shows until then): the camera's
+  // dolly out of the last minutia, and on phones the end frame, rescale it every frame.
+  usePathPrint(
+    edgeSvg,
+    edgeCanvas,
+    (text) => {
+      const size = parseFloat(text.getAttribute("font-size") ?? "15.5");
+      const d = docks(W, H);
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      return {
+        runs: [{ pts: edge.pts, text: EDGE_TEXT.repeat(4) }],
+        style: { family: getComputedStyle(text).fontFamily, weight: 600, size, spacing: 0.1 * size, dy: 0.34 * size, fill: RISO.sun, stroke: RISO.ink, strokeWidth: 5, advance: svgAdvance(text) },
+        // pixel for pixel at the scale it is read at (the finale, and on phones the end frame)
+        scale: (Math.max(d.finale.S, d.ending.S) / SVG_U) * dpr,
+      };
+    },
+    [edge, W, H],
+  );
   const scrim = useRef<HTMLDivElement>(null);
 
   useEffect(
@@ -125,31 +152,35 @@ export function FinaleAct({ rig }: { rig: Rig }) {
         const [na, nb] = BEAT.next;
         const [sa, sb] = BEAT.story;
 
-        const curIn = smoothstep(range(p, fa + 0.004, fa + 0.022));
-        const curOut = stacked ? smoothstep(range(p, na - 0.003, na + 0.009)) : 0.26 * smoothstep(range(p, na, na + 0.018));
+        // stacked: CURRENTLY is fully typed by fa+.031 and held at full ink until NEXT takes its place
+        const curIn = stacked ? smoothstep(range(p, fa + 0.002, fa + 0.014)) : smoothstep(range(p, fa + 0.004, fa + 0.022));
+        const curOut = stacked ? smoothstep(range(p, na, na + 0.009)) : 0.26 * smoothstep(range(p, na, na + 0.018));
         place(current.current, curIn * (1 - curOut), `translate3d(0, ${((1 - curIn) * 18 * k).toFixed(1)}px, 0)`);
         items.current.forEach((el, i) => {
           if (!el) return;
-          const t = smoothstep(range(p, fa + 0.012 + i * 0.006, fa + 0.024 + i * 0.006));
+          const ia = stacked ? fa + 0.006 + i * 0.003 : fa + 0.012 + i * 0.006;
+          const t = smoothstep(range(p, ia, ia + (stacked ? 0.01 : 0.012)));
           el.style.opacity = String(t);
           el.style.transform = `translate3d(0, ${((1 - t) * 10 * k).toFixed(1)}px, 0)`;
         });
 
-        // phones need the whole list on screen before the print takes the page back
-        const span = stacked ? 0.042 : nb - na - 0.012;
-        const nextIn = smoothstep(range(p, na, na + 0.012));
-        const nextOut = stacked ? smoothstep(range(p, sa - 0.006, sa + 0.006)) : 0.18 * smoothstep(range(p, sa, sb));
+        // phones need the whole list on screen, and held, before the print takes the page back:
+        // NEXT arrives once 2026 has cleared, all five goals are in by na+.038 and hold to sa-.012
+        const span = stacked ? 0.02 : nb - na - 0.012;
+        const ramp = stacked ? 0.01 : 0.012;
+        const nextIn = stacked ? smoothstep(range(p, na + 0.008, na + 0.018)) : smoothstep(range(p, na, na + 0.012));
+        const nextOut = stacked ? smoothstep(range(p, sa - 0.012, sa)) : 0.18 * smoothstep(range(p, sa, sb));
         place(nextBlock.current, nextIn * (1 - nextOut), "none");
         rows.current.forEach((el, i) => {
           if (!el) return;
-          const at = na + 0.008 + (span * i) / 5;
-          const t = smoothstep(range(p, at, at + 0.012));
+          const at = na + (stacked ? 0.012 : 0.008) + (span * i) / 5;
+          const t = smoothstep(range(p, at, at + ramp));
           el.style.opacity = String(t);
           el.style.transform = `translate3d(${((1 - t) * 18 * k).toFixed(1)}px, 0, 0)`;
           const st = strands.current[i];
           const dot = dots.current[i];
-          const draw = easeInOutCubic(range(p, at - 0.006, at + 0.012));
-          const hide = stacked ? 1 - smoothstep(range(p, sa - 0.006, sa + 0.006)) : 1 - 0.55 * smoothstep(range(p, sa, sb));
+          const draw = easeInOutCubic(range(p, at - 0.006, at + ramp));
+          const hide = stacked ? 1 - nextOut : 1 - 0.55 * smoothstep(range(p, sa, sb));
           if (st) {
             st.style.visibility = draw > 0 && hide > 0.004 ? "visible" : "hidden";
             st.style.strokeDasharray = `${draw.toFixed(4)} 1`;
@@ -164,14 +195,21 @@ export function FinaleAct({ rig }: { rig: Rig }) {
         // the legend rides the pen around the print
         const penT = smoothstep(range(p, fa, nb));
         const printShown = smoothstep(range(p, fa - 0.004, fa + 0.012));
-        fade(edgeSvg.current, printShown);
-        if (edgeSvg.current && printShown > 0) {
+        fade(edgeWrap.current, printShown);
+        if (edgeLayer.current && edgeWrap.current && printShown > 0) {
           const [ox, oy, S] = printToStage(f, W, H, 0, 0);
-          edgeSvg.current.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0) scale(${(S / SVG_U).toFixed(5)})`;
-          if (edgeMask.current) {
-            edgeMask.current.style.strokeDasharray = `${penT.toFixed(4)} 1`;
-            edgeMask.current.style.strokeDashoffset = (penT - 1).toFixed(4);
-          }
+          edgeLayer.current.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0) scale(${(S / SVG_U).toFixed(5)})`;
+          // Revealed by angle around the core, like the shader's own pen: a CSS mask, since the legend
+          // is a canvas once printed (an SVG <mask> only reaches SVG content).
+          // Screen angle (clockwise from 12 o'clock) of a print angle (counter-clockwise from +x, y up) is 90° − θ.
+          const [cx, cy] = printToStage(f, W, H, CX, CY);
+          const span = EDGE_SPAN * penT;
+          const mask =
+            span <= 0
+              ? "linear-gradient(transparent, transparent)"
+              : `conic-gradient(from ${(90 - edge.from - span).toFixed(2)}deg at ${cx.toFixed(1)}px ${cy.toFixed(1)}px, #000 ${span.toFixed(2)}deg, transparent ${(span + 0.4).toFixed(2)}deg)`;
+          edgeWrap.current.style.maskImage = mask;
+          edgeWrap.current.style.setProperty("-webkit-mask-image", mask);
         }
 
         // the last line, and the pen's way out of the print
@@ -185,7 +223,7 @@ export function FinaleAct({ rig }: { rig: Rig }) {
         const ctaIn = easeOutCubic(range(p, sb - 0.014, sb));
         place(cta.current, ctaIn, `translate3d(0, ${((1 - ctaIn) * 16 * k).toFixed(1)}px, 0) scale(${(0.9 + 0.1 * ctaIn).toFixed(3)})`);
         if (stacked) {
-          const down = easeInOutCubic(range(p, sa - 0.016, sa + 0.002));
+          const down = easeInOutCubic(range(p, sa - 0.01, sa + 0.006));
           place(scrim.current, smoothstep(range(p, fa, fa + 0.014)), `translate3d(0, ${(down * (g.storyTop - 40 * k - g.currentY + 54 * k)).toFixed(1)}px, 0)`);
         }
       })),
@@ -201,10 +239,12 @@ export function FinaleAct({ rig }: { rig: Rig }) {
     const x = fanX();
     const y = fanY(i);
     if (stacked) {
-      // down the left gutter, one lane each, so a ridge never crosses a line of text
+      // into the left gutter above the NEXT heading, then down it one lane each,
+      // so a ridge never crosses a line of text
       const gx = (8 + i * 2.6) * k;
-      const top = g.rowsTop - 16 * k;
-      return `M${dx.toFixed(1)} ${dy.toFixed(1)}C${dx.toFixed(1)} ${(dy + 30 * k).toFixed(1)} ${gx.toFixed(1)} ${(top - 50 * k).toFixed(1)} ${gx.toFixed(1)} ${top.toFixed(1)}L${gx.toFixed(1)} ${(y - 11 * k).toFixed(1)}Q${gx.toFixed(1)} ${y.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`;
+      const top = g.nextY - 4 * k;
+      const drop = Math.max(0, top - dy);
+      return `M${dx.toFixed(1)} ${dy.toFixed(1)}C${dx.toFixed(1)} ${(dy + drop * 0.5).toFixed(1)} ${gx.toFixed(1)} ${(top - Math.max(14 * k, drop * 0.5)).toFixed(1)} ${gx.toFixed(1)} ${top.toFixed(1)}L${gx.toFixed(1)} ${(y - 11 * k).toFixed(1)}Q${gx.toFixed(1)} ${y.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`;
     }
     const mid = dx + (x - dx) * (0.38 + i * 0.05);
     return `M${dx.toFixed(1)} ${dy.toFixed(1)}C${mid.toFixed(1)} ${dy.toFixed(1)} ${mid.toFixed(1)} ${y.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`;
@@ -224,19 +264,20 @@ export function FinaleAct({ rig }: { rig: Rig }) {
       )}
 
       {/* the legend on the live edge */}
-      <svg ref={edgeSvg} aria-hidden width={1} height={1} className="pointer-events-none absolute left-0 top-0" style={{ overflow: "visible", transformOrigin: "0 0", visibility: "hidden", willChange: "transform" }}>
-        <defs>
-          <path id="outro-edge" d={edge.d} fill="none" />
-          <mask id="outro-edge-mask" maskUnits="userSpaceOnUse" x={-900} y={-1000} width={1800} height={2000}>
-            <path ref={edgeMask} d={edge.maskD} fill="none" stroke="#fff" strokeWidth={60} pathLength={1} />
-          </mask>
-        </defs>
-        <g mask="url(#outro-edge-mask)">
-          <text dy="0.34em" fill={RISO.sun} stroke={RISO.ink} strokeWidth={5} style={{ paintOrder: "stroke fill", fontFamily: "var(--font-geist-mono)", fontWeight: 600, letterSpacing: "0.1em" }} fontSize={stacked ? 19 : 15.5}>
-            <textPath href="#outro-edge">{EDGE_TEXT.repeat(4)}</textPath>
-          </text>
-        </g>
-      </svg>
+      <div ref={edgeWrap} aria-hidden className="pointer-events-none absolute inset-0" style={{ visibility: "hidden", willChange: "transform" }}>
+        {/* print units × SVG_U, placed and scaled with the print */}
+        <div ref={edgeLayer} className="absolute left-0 top-0" style={{ width: 1, height: 1, transformOrigin: "0 0", willChange: "transform" }}>
+          <svg ref={edgeSvg} width={1} height={1} className="absolute left-0 top-0" style={{ overflow: "visible" }}>
+            <defs>
+              <path id="outro-edge" d={edge.d} fill="none" />
+            </defs>
+            <text dy="0.34em" fill={RISO.sun} stroke={RISO.ink} strokeWidth={5} style={{ paintOrder: "stroke fill", fontFamily: "var(--font-geist-mono)", fontWeight: 600, letterSpacing: "0.1em" }} fontSize={stacked ? 19 : 15.5}>
+              <textPath href="#outro-edge">{EDGE_TEXT.repeat(4)}</textPath>
+            </text>
+          </svg>
+          <canvas ref={edgeCanvas} className="absolute" style={{ display: "none" }} />
+        </div>
+      </div>
 
       {/* ridges fanning out of the delta */}
       <svg aria-hidden className="pointer-events-none absolute inset-0" width={W} height={H} style={{ overflow: "visible" }}>
@@ -294,7 +335,7 @@ export function FinaleAct({ rig }: { rig: Rig }) {
 
       {/* next */}
       <div ref={nextBlock} className="pointer-events-none absolute" style={{ left: g.left, width: g.width, top: g.nextY, visibility: "hidden" }}>
-        <h3 style={{ ...BIG, fontSize: g.nextHead, lineHeight: 1, margin: 0, color: RISO.sun, letterSpacing: "0.04em" }}>NEXT</h3>
+        <h3 style={{ ...BIG, fontSize: g.nextHead, lineHeight: 1, margin: 0, paddingLeft: stacked ? 22 * k : 0, color: RISO.sun, letterSpacing: "0.04em" }}>NEXT</h3>
         <ol className="m-0 list-none p-0" style={{ marginTop: (stacked ? 10 : 14) * k }}>
           {NEXT.map((n, i) => (
             <li

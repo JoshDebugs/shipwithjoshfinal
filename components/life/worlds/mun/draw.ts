@@ -517,8 +517,10 @@ function drawThreads(ctx: CanvasRenderingContext2D, sc: Scene, f: Frame, A: numb
   // twang: a damped wave rolls outward arc by arc
   const tw = f.twang;
   const amp0 = L.portrait ? 11 : 17;
-  const baseA = (L.low ? 0.3 : 0.27) * A * (1 - 0.45 * range(f.p, B.fill[0], 1));
-  const lw = L.low ? 1 : 1.15;
+  // the lock: for a beat the whole fan runs white-hot into Josh's seat
+  const flare = lockFlare(f.p);
+  const baseA = (L.low ? 0.3 : 0.27) * A * (1 - 0.45 * range(f.p, B.fill[0], 1)) * (1 + 1.5 * flare);
+  const lw = (L.low ? 1 : 1.15) * (1 + 0.45 * flare);
 
   ctx.globalCompositeOperation = "lighter";
   ctx.lineWidth = lw;
@@ -638,6 +640,26 @@ function drawStarburst(ctx: CanvasRenderingContext2D, sc: Scene, f: Frame, A: nu
   gr.addColorStop(1, alpha(RISO.sun, 0));
   ctx.fillStyle = gr;
   ctx.fillRect(pr.x - R, pr.y - R, R * 2, R * 2);
+  // the lock itself: an additive white-hot core that blooms out, then settles back to the glow
+  const flare = lockFlare(f.p) * A;
+  if (flare > 0) {
+    const R2 = R * (1.2 + 0.9 * flare);
+    const g2 = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, R2);
+    g2.addColorStop(0, alpha(RISO.paper, 0.9 * flare));
+    g2.addColorStop(0.22, alpha(RISO.paper, 0.45 * flare));
+    g2.addColorStop(0.5, alpha(RISO.sun, 0.22 * flare));
+    g2.addColorStop(1, alpha(RISO.sun, 0));
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = g2;
+    ctx.fillRect(pr.x - R2, pr.y - R2, R2 * 2, R2 * 2);
+    ctx.globalCompositeOperation = "source-over";
+  }
+}
+
+/** 0 → 1 → 0 around the moment the last speech locks the room onto Josh. */
+function lockFlare(p: number): number {
+  const lockAt = B.waves[2][1];
+  return smoothstep(range(p, lockAt - 0.024, lockAt)) * (1 - smoothstep(range(p, lockAt + 0.004, B.drop[0] + 0.03)));
 }
 
 /* ------------------------------------------------------------------- exit */

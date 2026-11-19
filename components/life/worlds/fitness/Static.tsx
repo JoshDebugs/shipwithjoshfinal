@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useStage } from "@/components/life/multiverse/runtime";
 import { C, MODES, alpha, mix, rampCss, stopsToFloats } from "./colors";
-import { CAPTIONS, HEADLINE, HINT, LOCKOUT, SUBJECT, VISIBLE_NOTE } from "./copy";
+import { AGAIN, CAPTIONS, HEADLINE, HINT, LOCKOUT, SUBJECT, VISIBLE_NOTE } from "./copy";
 import { CpuThermal } from "./cpu";
 import type { Renderer } from "./engine";
 import { computeFrame, createFrame } from "./frame";
@@ -85,9 +85,11 @@ export default function FitnessStatic() {
       {/* the frame */}
       <div className="relative" style={{ height: H }}>
         <canvas ref={canvasRef} aria-hidden className="absolute inset-0 h-full w-full" style={{ background: C.field }} />
-        <div aria-hidden className="absolute" style={{ ...label, left: g.hudSide, top: g.hudTop }}>
+        <div className="absolute" style={{ ...label, left: g.hudSide, top: g.hudTop }}>
           <div>{SUBJECT}</div>
-          <div style={{ color: C.hudDim }}>LOCKOUT</div>
+          <div aria-hidden style={{ color: C.hudDim }}>
+            LOCKOUT
+          </div>
         </div>
         <div className="absolute" style={{ left: g.caption.x, bottom: H - g.caption.bottom, width: g.caption.w }}>
           <div style={{ ...label, color: C.sun, marginBottom: 7 * u }}>LOCKOUT</div>
@@ -98,14 +100,15 @@ export default function FitnessStatic() {
       {/* the readout */}
       <div className="relative" style={{ padding: `${(mobile ? 56 : 88) * u}px ${pad}px ${(mobile ? 96 : 112) * u}px`, background: mix(C.ink, C.cobalt, 0.08) }}>
         <div style={{ ...label, color: C.sun }}>09 · FITNESS · AGE 18</div>
-        <p style={{ fontFamily: "var(--f-unbounded)", fontWeight: 800, fontSize: (mobile ? 42 : 78) * u, lineHeight: 1.02, letterSpacing: "-0.03em", marginTop: 14 * u }}>{HEADLINE}</p>
+        <h3 style={{ fontFamily: "var(--f-unbounded)", fontWeight: 800, fontSize: (mobile ? 42 : 78) * u, lineHeight: 1.02, letterSpacing: "-0.03em", marginTop: 14 * u }}>{HEADLINE}</h3>
 
-        <div className="grid" style={{ marginTop: (mobile ? 40 : 64) * u, gridTemplateColumns: mobile ? "1fr" : "repeat(4, minmax(0, 1fr))", gap: (mobile ? 26 : 32) * u }}>
+        <div className="grid" style={{ marginTop: (mobile ? 40 : 64) * u, gridTemplateColumns: mobile ? "1fr" : W < 1100 ? "repeat(2, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))", gap: (mobile ? 26 : 32) * u }}>
           {SETS.map((s, i) => (
             <div key={s.word} style={{ borderTop: `1px solid ${alpha(C.paper, 0.26)}`, paddingTop: 12 * u }}>
               <div style={{ ...label, color: C.hudDim }}>SET {s.n}/04</div>
-              <div style={{ fontFamily: "var(--f-unbounded)", fontWeight: 900, fontSize: (mobile ? 24 : 26) * u, marginTop: 8 * u, letterSpacing: "-0.01em", overflowWrap: "anywhere", color: [C.cobalt, C.teal, C.pink, C.sun][i] }}>{s.word}</div>
+              <div style={{ fontFamily: "var(--f-unbounded)", fontWeight: 900, fontSize: (mobile ? 24 : 26) * u, marginTop: 8 * u, letterSpacing: "-0.01em", color: [C.cobalt, C.teal, C.pink, C.sun][i] }}>{s.word}</div>
               <p style={{ fontSize: (mobile ? 15 : 16) * u, lineHeight: 1.4, marginTop: 6 * u, color: alpha(C.paper, 0.82) }}>{CAPTIONS[i + 1].line}</p>
+              {i === 3 && <p style={{ ...label, color: C.sun, marginTop: 8 * u }}>{AGAIN.join(" ")}</p>}
             </div>
           ))}
         </div>

@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
-import { Cursor } from "@/components/Cursor";
-import { AppFrame } from "@/components/AppFrame";
-import { ConsoleSignature } from "@/components/ConsoleSignature";
-import { SwipeNavigation } from "@/components/SwipeNavigation";
+import { Cursor } from "@/components/layout/Cursor";
+import { AppFrame } from "@/components/layout/AppFrame";
+import { ConsoleSignature } from "@/components/layout/ConsoleSignature";
+import { SwipeNavigation } from "@/components/layout/SwipeNavigation";
 
-import { IntroAnimation } from "@/components/IntroAnimation";
+import { IntroAnimation } from "@/components/layout/IntroAnimation";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -68,21 +68,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-  modal,
-}: {
-  children: React.ReactNode;
-  /**
-   * Parallel route slot. Populated by `app/@modal/...` route segments.
-   * `app/@modal/default.tsx` returns null so this is empty by default;
-   * `app/@modal/(.)work/[slug]/page.tsx` intercepts in-app navigation from
-   * the home page to `/work/[slug]` and renders the cinematic modal instead
-   * of unmounting the home view. Direct hits / refresh on `/work/[slug]`
-   * still render the standalone case-study page (good for SEO + sharing).
-   */
-  modal: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>
@@ -91,11 +77,8 @@ export default function RootLayout({
          * clips overflow. Only the inner scroll-container scrolls; the frame
          * itself never moves. The intro animation's final squircle has the
          * exact same inset/border/radius so it hands off seamlessly.
-         *
-         * `overlay` is the @modal parallel-route slot — renders above the
-         * scroll surface inside the frame.
          */}
-        <AppFrame overlay={modal}>{children}</AppFrame>
+        <AppFrame>{children}</AppFrame>
         <Cursor />
 
         <ConsoleSignature />
